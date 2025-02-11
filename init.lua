@@ -1,5 +1,5 @@
 --[[
-
+https://github.com/nvim-lua/kickstart.nvim
 =====================================================================
 ==================== READ THIS BEFORE CONTINUING ====================
 =====================================================================
@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -102,7 +102,7 @@ vim.g.have_nerd_font = false
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
@@ -333,7 +333,7 @@ require('lazy').setup({
   --
   -- Use the `dependencies` key to specify the dependencies of a particular plugin
 
-  { -- Fuzzy Finder (files, lsp, etc)
+  {
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
     branch = '0.1.x',
@@ -402,6 +402,7 @@ require('lazy').setup({
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
+      -- local utils = require 'telescope.utils'
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
@@ -412,6 +413,11 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+
+      -- nnoremap <leader>ff <cmd>Telescope find_files<cr>
+      -- nnoremap <leader>fg <cmd>Telescope live_grep<cr>
+      -- nnoremap <leader>fb <cmd>Telescope buffers<cr>
+      -- nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -435,6 +441,11 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sn', function()
         builtin.find_files { cwd = vim.fn.stdpath 'config' }
       end, { desc = '[S]earch [N]eovim files' })
+      --
+      -- Shortcut for searching current dif
+      -- vim.keymap.set('f', '<leader>sf', function()
+      --   builtin.find_files { cwd = utils.buffer_dir() }
+      -- end, { desc = '[S]earch [f]current dir files' })
     end,
   },
 
@@ -639,7 +650,7 @@ require('lazy').setup({
                 callSnippet = 'Replace',
               },
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-              -- diagnostics = { disable = { 'missing-fields' } },
+              diagnostics = { disable = { 'missing-fields' } },
             },
           },
         },
@@ -902,7 +913,7 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'python', 'query', 'vim', 'vimdoc' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -948,27 +959,253 @@ require('lazy').setup({
   -- Or use telescope!
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
+
+  -- Michael Hatton additional plugins
+  --
+  --
+  -- {
+  --
+  --   require 'nvim-tree/nvim-web-devicons',
+  --   opts = {},
+  -- },
+
+  {
+    'ibhagwan/fzf-lua',
+    -- dependencies = { 'nvim-tree/nvim-web-devicons' },
+    -- or if using mini.icons/mini.nvim
+    dependencies = { 'echasnovski/mini.icons' },
+    opts = {},
+  },
+
+  {
+    'frankroeder/parrot.nvim',
+    dependencies = { 'ibhagwan/fzf-lua', 'nvim-lua/plenary.nvim' },
+    -- optionally include "rcarriga/nvim-notify" for beautiful notifications
+    opts = {
+      providers = {
+        gemini = {
+          api_key = os.getenv 'GEMINI_API_KEY',
+        },
+        openai = {
+          api_key = os.getenv 'OPENAI_API_KEY',
+        },
+      },
+    },
+  },
+  -- config = function()
+  --   require('parrot').setup {
+  --     -- Providers must be explicitly added to make them available.
+  --     providers = {
+  --       anthropic = {
+  --         api_key = os.getenv 'ANTHROPIC_API_KEY',
+  --       },
+  --       gemini = {
+  --         api_key = os.getenv 'GEMINI_API_KEY',
+  --       },
+  --       groq = {
+  --         api_key = os.getenv 'GROQ_API_KEY',
+  --       },
+  --       mistral = {
+  --         api_key = os.getenv 'MISTRAL_API_KEY',
+  --       },
+  --       pplx = {
+  --         api_key = os.getenv 'PERPLEXITY_API_KEY',
+  --       },
+  --       -- provide an empty list to make provider available (no API key required)
+  --       -- ollama = {},
+  --       openai = {
+  --         api_key = os.getenv 'OPENAI_API_KEY',
+  --       },
+  --       github = {
+  --         api_key = os.getenv 'GITHUB_TOKEN',
+  --       },
+  --       nvidia = {
+  --         api_key = os.getenv 'NVIDIA_API_KEY',
+  --       },
+  --       xai = {
+  --         api_key = os.getenv 'XAI_API_KEY',
+  --       },
+  --     },
+  --   }
+  -- end,
+
+  {
+    'folke/zen-mode.nvim',
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    },
+  },
+
+  {
+    'junegunn/limelight.vim',
+    opts = {},
+    config = function() end,
+  },
+  {
+    'junegunn/goyo.vim',
+    opts = {},
+    config = function() end,
+  },
+  {
+    'junegunn/seoul256.vim',
+    opts = {},
+    config = function() end,
+  },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
     -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table
-    icons = vim.g.have_nerd_font and {} or {
-      cmd = '⌘',
-      config = '🛠',
-      event = '📅',
-      ft = '📂',
-      init = '⚙',
-      keys = '🗝',
-      plugin = '🔌',
-      runtime = '💻',
-      require = '🌙',
-      source = '📄',
-      start = '🚀',
-      task = '📌',
-      lazy = '💤 ',
-    },
+    -- icons = vim.g.have_nerd_font and {} or {
+    --   cmd = '⌘',
+    --   config = '🛠',
+    --   event = '📅',
+    --   ft = '📂',
+    --   init = '⚙',
+    --   keys = '🗝',
+    --   plugin = '🔌',
+    --   runtime = '💻',
+    --   require = '🌙',
+    --   source = '📄',
+    --   start = '🚀',
+    --   task = '📌',
+    --   lazy = '💤 ',
+    -- },
   },
 })
+-- I write prose in markdown, all the following is to help with that.
+function _G.toggleProse()
+  require('zen-mode').toggle {
+    window = {
+      backdrop = 1,
+      width = 100,
+      options = {
+        signcolumn = 'no', -- disable signcolumn
+        number = false, -- disable number column
+        relativenumber = false, -- disable relative numbers
+        cursorline = false, -- disable cursorline
+        cursorcolumn = false, -- disable cursor column
+        foldcolumn = '0', -- disable fold column
+        list = false, -- disable whitespace characters
+      },
+    },
+    plugins = {
+      gitsigns = { enabled = false },
+      tmux = { enabled = false },
+      kitty = { enabled = false },
+      -- this will change the font size on wezterm when in zen mode
+      -- See alse also the Plugins/Wezterm section in this projects README
+      wezterm = {
+        enabled = false,
+        -- can be either an absolute font size or the number of incremental steps
+        font = '+4', -- (10% increase per step)
+      },
+    },
+    on_open = function()
+      if vim.bo.filetype == 'markdown' or vim.bo.filetype == 'telekasten' then
+        --
+        --  Hides status bar when only one file open
+        vim.opt.laststatus = 1
+        vim.opt.showmode = false
+        vim.opt.showcmd = false
+        vim.opt.spell = true
+        vim.opt.textwidth = 80
+        vim.opt.formatoptions = 'tcqwn'
+        vim.opt.linespace = 15
+        vim.opt.guifont = 'Menlo:h16'
+        vim.opt.background = 'dark'
+
+        vim.cmd 'syntax off' -- Or consider vim.o.syntax = nil or vim.o.syntax = "" or vim.o.syntax = false (less common, 'syntax off' command is more widely used and understood)
+        vim.opt.scrolloff = 999
+
+        -- Remove right sidebar
+        vim.cmd 'set guioptions-=r'
+        -- Remove left sidebars
+        vim.cmd 'set guioptions-=L'
+
+        --  Set the cursor to not blink
+        vim.cmd 'set guicursor=a:blinkon0'
+        --
+        -- set Limelight settings
+        -- Color name (:help cterm-colors) or ANSI code
+        -- vim.cmd 'let g:limelight_conceal_ctermfg = "gray"'
+        vim.g.limelight_conceal_ctermfg = 'gray'
+        vim.g.limelight_conceal_ctermfg = 240
+
+        -- Color name (:help gui-colors) or RGB color
+        vim.g.limelight_conceal_guifg = 'DarkGray'
+        vim.g.limelight_conceal_guifg = '#777777'
+
+        -- Default: 0.5
+        vim.g.limelight_default_coefficient = 0.7
+
+        -- Number of preceding/following paragraphs to include (default: 0)
+        vim.g.limelight_paragraph_span = 0
+
+        -- Beginning/end of paragraph
+        --   When there's no empty line between the paragraphs
+        --   and each paragraph starts with indentation
+        -- vim.cmd 'let g:limelight_bop = "^\\s"'
+        -- vim.cmd 'let g:limelight_eop = "\ze\n^\\s"'
+
+        -- Highlighting priority (default: 10)
+        --   Set it to -1 not to overrule hlsearch
+        vim.g.limelight_priority = -1
+        vim.g.seoul256_background = 236
+        vim.cmd 'colo seoul256'
+        vim.cmd 'Limelight'
+        vim.cmd 'Goyo'
+
+        -- vim.keymap.set('n', 'j', 'gj', { noremap = true })
+        -- vim.keymap.set('n', 'k', 'gk', { noremap = true })
+      end
+    end,
+    on_close = function()
+      vim.cmd 'set so=3'
+      vim.cmd 'set rnu'
+      if vim.bo.filetype == 'markdown' or vim.bo.filetype == 'telekasten' then
+        vim.cmd 'set nowrap'
+        vim.cmd 'set nolinebreak'
+        vim.cmd 'set colorcolumn=80'
+      end
+      vim.cmd 'set nospell'
+      vim.cmd 'set nocompatible' -- Vim defaults rather than vi ones. Keep at top.
+      vim.cmd 'filetype plugin indent on' -- Enable filetype-specific settings.
+      vim.cmd 'syntax on' -- Enable syntax highlighting.
+      vim.cmd 'set backspace=2' -- Make the backspace behave as most applications.
+      vim.cmd 'set autoindent' -- Use current indent for new lines.
+      vim.cmd 'set display=lastline' -- Show as much of the line as will fit.
+      vim.cmd 'set wildmenu' -- Better tab completion in the commandline.
+      vim.cmd 'set wildmode=list:longest' -- List all matches and complete to the longest match.
+      vim.cmd 'set showcmd' -- Show (partial) command in bottom-right.
+      vim.cmd 'set expandtab' -- Use spaces instead of tabs for indentation.
+      vim.cmd 'set smarttab' -- Backspace removes 'shiftwidth' worth of spaces.
+      vim.cmd 'set number' -- Show line numbers.
+      vim.cmd 'set wrap' -- Wrap long lines.
+      vim.cmd 'set laststatus=2' -- Always show the statusline.
+      vim.cmd 'set ruler' -- Show the ruler in the statusline.
+      vim.cmd 'set incsearch' -- Jump to search match while typing.
+      vim.cmd 'set hlsearch' -- Highlight the last used search pattern.
+      vim.cmd 'set ignorecase' -- Searching with / is case-insensitive.
+      vim.cmd 'set smartcase' -- Disable 'ignorecase' if the term contains upper-case.
+      vim.cmd 'set nrformats-=octal' -- Remove octal support from 'nrformats'.
+      vim.cmd 'set tabstop=4' -- Size of a Tab character.
+      vim.cmd 'set shiftwidth=0' -- Use same value as 'tabstop'.
+      vim.cmd 'set softtabstop=-1' -- Use same value as 'shiftwidth'.
+      vim.cmd 'set formatoptions+=ncroqlj' -- Control automatic formatting.
+      vim.cmd 'colo default'
+
+      vim.cmd 'Limelight!'
+      vim.cmd 'Goyo!'
+
+      -- vim.keymap.set('n', 'j', 'j', { noremap = true })
+      -- vim.keymap.set('n', 'k', 'k', { noremap = true })
+    end,
+  }
+end
+
+vim.keymap.set('n', '<localleader>m', ':lua _G.toggleProse()<cr>', { noremap = true, silent = true, desc = 'Toggle Writing Mode' })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
