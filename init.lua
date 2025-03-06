@@ -276,6 +276,9 @@ require('lazy').setup({
       -- delay between pressing a key and opening which-key (milliseconds)
       -- this setting is independent of vim.opt.timeoutlen
       delay = 0,
+
+      ---@type false | "classic" | "modern" | "helix"
+      preset = 'helix',
       icons = {
         -- set icon mappings to true if you have a Nerd Font
         mappings = vim.g.have_nerd_font,
@@ -629,7 +632,7 @@ require('lazy').setup({
       local servers = {
         -- clangd = {},
         -- gopls = {},
-        -- pyright = {},
+        pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -706,26 +709,28 @@ require('lazy').setup({
     },
     opts = {
       notify_on_error = false,
-      format_on_save = function(bufnr)
-        -- Disable "format_on_save lsp_fallback" for languages that don't
-        -- have a well standardized coding style. You can add additional
-        -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
-        local lsp_format_opt
-        if disable_filetypes[vim.bo[bufnr].filetype] then
-          lsp_format_opt = 'never'
-        else
-          lsp_format_opt = 'fallback'
-        end
-        return {
-          timeout_ms = 500,
-          lsp_format = lsp_format_opt,
-        }
-      end,
+      format_on_save = false,
+      -- format_on_save = function(bufnr)
+      --   -- Disable "format_on_save lsp_fallback" for languages that don't
+      --   -- have a well standardized coding style. You can add additional
+      --   -- languages here or re-enable it for the disabled ones.
+      --   local disable_filetypes = { c = true, cpp = true }
+      --   local lsp_format_opt
+      --   if disable_filetypes[vim.bo[bufnr].filetype] then
+      --     lsp_format_opt = 'never'
+      --   else
+      --     lsp_format_opt = 'fallback'
+      --   end
+      --   return {
+      --     timeout_ms = 5000,
+      --     lsp_format = lsp_format_opt,
+      --   }
+      -- end,
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        -- python = { 'isort', 'black' },
+        python = { 'black' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
@@ -761,6 +766,7 @@ require('lazy').setup({
           -- },
         },
       },
+
       'saadparwaiz1/cmp_luasnip',
 
       -- Adds other completion capabilities.
@@ -800,7 +806,11 @@ require('lazy').setup({
           -- Accept ([y]es) the completion.
           --  This will auto-import if your LSP supports it.
           --  This will expand snippets if the LSP sent a snippet.
-          ['<C-y>'] = cmp.mapping.confirm { select = true },
+          -- ['<C-y>'] = cmp.mapping.confirm { select = true },
+          -- change  to Classic completion keymaps
+          ['<CR>'] = cmp.mapping.confirm { select = true },
+          ['<Tab>'] = cmp.mapping.select_next_item(),
+          ['<S-Tab>'] = cmp.mapping.select_prev_item(),
 
           -- If you prefer more traditional completion keymaps,
           -- you can uncomment the following lines
@@ -836,6 +846,9 @@ require('lazy').setup({
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
         },
         sources = {
+          per_filetype = {
+            codecompanion = { 'codecompanion' },
+          },
           {
             name = 'lazydev',
             -- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
@@ -932,6 +945,33 @@ require('lazy').setup({
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
+{
+
+  'github/copilot.vim',
+  opts = {},
+  config = function() end,
+},
+
+  -- {
+  --   'olimorris/codecompanion.nvim',
+  --   config = true,
+  --   dependencies = {
+  --     'nvim-lua/plenary.nvim',
+  --     'nvim-treesitter/nvim-treesitter',
+  --   },
+  --   opts = {
+  --     strategies = {
+  --       -- Change the default chat adapter
+  --       chat = {
+  --         adapter = 'openai',
+  --       },
+  --     },
+  --     opts = {
+  --       -- Set debug logging
+  --       log_level = 'DEBUG',
+  --     },
+  --   },
+  -- },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
@@ -1053,6 +1093,40 @@ require('lazy').setup({
     opts = {},
     config = function() end,
   },
+  {
+    'tpope/vim-surround',
+    opts = {},
+    config = function() end,
+  },
+  {
+    'preservim/tagbar',
+    opts = {},
+    config = function() end,
+  },
+  {
+    'wakatime/vim-wakatime',
+    opts = {},
+    config = function() end,
+  },
+  {
+    'norcalli/nvim-colorizer.lua',
+    opts = {},
+    config = function() end,
+  },
+  -- {
+  --   'iamcco/markdown-preview.nvim',
+  --   opts = {},
+  --   config = function() end,
+  -- },
+  {
+    'iamcco/markdown-preview.nvim',
+    cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
+    build = 'cd app && yarn install',
+    init = function()
+      vim.g.mkdp_filetypes = { 'markdown' }
+    end,
+    ft = { 'markdown' },
+  },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
@@ -1103,7 +1177,7 @@ function _G.toggleProse()
       },
     },
     on_open = function()
-      if vim.bo.filetype == 'markdown' or vim.bo.filetype == 'telekasten' then
+      if vim.bo.filetype == 'markdown' or vim.bo.filetype == 'text' then
         --
         --  Hides status bar when only one file open
         vim.opt.laststatus = 1
@@ -1164,7 +1238,7 @@ function _G.toggleProse()
     on_close = function()
       vim.cmd 'set so=3'
       vim.cmd 'set rnu'
-      if vim.bo.filetype == 'markdown' or vim.bo.filetype == 'telekasten' then
+      if vim.bo.filetype == 'markdown' or vim.bo.filetype == 'text' then
         vim.cmd 'set nowrap'
         vim.cmd 'set nolinebreak'
         vim.cmd 'set colorcolumn=80'
@@ -1194,7 +1268,7 @@ function _G.toggleProse()
       vim.cmd 'set shiftwidth=0' -- Use same value as 'tabstop'.
       vim.cmd 'set softtabstop=-1' -- Use same value as 'shiftwidth'.
       vim.cmd 'set formatoptions+=ncroqlj' -- Control automatic formatting.
-      vim.cmd 'colo default'
+      vim.cmd 'colo tokyonight-night'
 
       vim.cmd 'Limelight!'
       vim.cmd 'Goyo!'
@@ -1206,6 +1280,278 @@ function _G.toggleProse()
 end
 
 vim.keymap.set('n', '<localleader>m', ':lua _G.toggleProse()<cr>', { noremap = true, silent = true, desc = 'Toggle Writing Mode' })
+vim.keymap.set('n', '<localleader>l', ':Lazy<cr>', { noremap = true, silent = true, desc = 'Lazy Plugin Manager' })
+
+-- set up folding
+vim.opt.foldmethod = 'expr'
+vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+vim.opt.foldlevel = 99
+vim.opt.foldlevelstart = 5
+vim.opt.foldnestmax = 4
+vim.opt.foldtext = '-->'
+
+vim.keymap.set('n', '<F8>', ':TagbarToggle<CR>')
+
+if vim.loop.os_uname().sysname == 'Linux' then
+  -- Linux
+elseif vim.loop.os_uname().sysname == 'Windows_NT' then
+  -- Windows options here
+elseif vim.loop.os_uname().sysname == 'Darwin' then -- 'Darwin' is the sysname for macOS
+  -- Mac options here
+  vim.g.tagbar_ctags_bin = '/opt/homebrew/Cellar/universal-ctags/p6.1.20241103.0/bin/ctags'
+end
+
+-- colorizer set update
+---- Attaches to every FileType mode
+require('colorizer').setup()
+
+-- Attach to certain Filetypes, add special configuration for `html`
+-- Use `background` for everything else.
+require('colorizer').setup {
+  'css',
+  'javascript',
+  html = {
+    mode = 'foreground',
+  },
+}
+
+-- Use the `default_options` as the second parameter, which uses
+-- `foreground` for every mode. This is the inverse of the previous
+-- setup configuration.
+require('colorizer').setup({
+  'css',
+  'javascript',
+  html = { mode = 'background' },
+}, { mode = 'foreground' })
+
+-- Use the `default_options` as the second parameter, which uses
+-- `foreground` for every mode. This is the inverse of the previous
+-- setup configuration.
+require('colorizer').setup {
+  '*', -- Highlight all files, but customize some others.
+  css = { rgb_fn = true }, -- Enable parsing rgb(...) functions in css.
+  html = { names = false }, -- Disable parsing "names" like Blue or Gray
+}
+
+-- Exclude some filetypes from highlighting by using `!`
+require('colorizer').setup {
+  '*', -- Highlight all files, but customize some others.
+  '!vim', -- Exclude vim from highlighting.
+  -- Exclusion Only makes sense if '*' is specified!
+}
+
+-- require('codecompanion').setup {
+--   adapters = {
+--     openai = require('codecompanion.adapters').extend('openai', {
+--       env = {
+--         api_key = 'OPENAI_API_KEY',
+--       },
+--     }),
+--     -- ollama = require('codecompanion.adapters').extend('ollama', {
+--     --   schema = {
+--     --     model = {
+--     --       default = 'codestral',
+--     --     },
+--     --   },
+--     -- }),
+--   },
+--   strategies = {
+--     chat = 'openai',
+--     inline = 'openai',
+--     tool = 'openai',
+--   },
+--   log_level = 'DEBUG',
+-- }
+-- require('codecompanion').setup {
+--   adapters = {
+--     llama3 = function()
+--       return require('codecompanion.adapters').extend('ollama', {
+--         name = 'llama3', -- Give this adapter a different name to differentiate it from the default ollama adapter
+--         schema = {
+--           model = {
+--             default = 'phi3:3.8b-mini-4k-instruct-q6_K',
+--           },
+--           num_ctx = {
+--             default = 4096,
+--           },
+--           num_predict = {
+--             default = -1,
+--           },
+--         },
+--       })
+--     end,
+--     openai = function()
+--       return require('codecompanion.adapters').extend('openai', {
+--         name = 'openai', -- Give this adapter a different name to differentiate it from the default ollama adapter
+--         env = {
+--           api_key = os.getenv 'OPENAI_API_KEY',
+--         },
+--         schema = {
+--           model = {
+--             default = 'gpt-3.5-turbo',
+--           },
+--           num_ctx = {
+--             default = 4096,
+--           },
+--           num_predict = {
+--             default = -1,
+--           },
+--         },
+--       })
+--     end,
+--   },
+--   strategies = {
+--     chat = {
+--       adapter = 'openai',
+--     },
+--     inline = {
+--       adapter = 'openai',
+--     },
+--     agent = {
+--       adapter = 'openai',
+--     },
+--   },
+--   display = {
+--     chat = {
+--       window = {
+--         layout = 'vertical', -- float|vertical|horizontal|buffer
+--       },
+--     },
+--   },
+--   opts = {
+--     ---@param adapter CodeCompanion.Adapter
+--     ---@return string
+--     system_prompt = function(adapter)
+--       if adapter.schema.model.default == 'llama3.1:latest' then
+--         return 'My custom system prompt'
+--       end
+--       return 'My default system prompt'
+--     end,
+--   },
+-- }
+
+        -- gemini = {
+        --   api_key = os.getenv 'GEMINI_API_KEY',
+        -- },
+-- require('codecompanion').setup {
+--   -- display = {
+--   --   action_palette = {
+--   --     width = 95,
+--   --     height = 10,
+--   --     prompt = 'Prompt ', -- Prompt used for interactive LLM calls
+--   --     provider = 'default', -- default|telescope|mini_pick
+--   --     opts = {
+--   --       show_default_actions = true, -- Show the default actions in the action palette?
+--   --       show_default_prompt_library = true, -- Show the default prompt library in the action palette?
+--   --     },
+--   --   },
+--   -- },
+--   adapters = {
+--     openai = function()
+--       return require('codecompanion.adapters').extend('openai', {
+--         name = "openai", -- Give this adapter a different name to differentiate it from the default ollama adapter
+--         schema = {
+--           model = {
+--             default = "o3-mini",
+--           },
+--           num_ctx = {
+--             default = 16384,
+--           },
+--           num_predict = {
+--             default = -1,
+--           },
+--         env = {
+--           api_key = 'OPENAI_API_KEY',
+--         },
+--         },
+--         })
+--     end,
+--   },
+--   strategies = {
+--     chat = 'openai',
+--     inline = 'openai',
+--     tool = 'openai',
+--   },
+--   log_level = 'DEBUG',
+-- }
+-- require('codecompanion').setup {
+--   strategies = {
+--     chat = {
+--       adapter = 'anthropic',
+--     },
+--     inline = {
+--       adapter = 'anthropic',
+--     },
+--   },
+-- }
+-- require("codecompanion").setup({
+--   adapters = {
+--     my_openai = function()
+--       return require("codecompanion.adapters").extend("openai_compatible", {
+--         env = {
+--           url = "http[s]://open_compatible_ai_url", -- optional: default value is ollama url http://127.0.0.1:11434
+--           api_key = "OPENAI_API_KEY", -- optional: if your endpoint is authenticated
+--           chat_url = "/v1/chat/completions", -- optional: default value, override if different
+--         },
+--         schema = {
+--           model = {
+--             default = "deepseek-r1-671b",  -- define llm model to be used
+--           },
+--           temperature = {
+--             order = 2,
+--             mapping = "parameters",
+--             type = "number",
+--             optional = true,
+--             default = 0.8,
+--             desc = "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both.",
+--             validate = function(n)
+--               return n >= 0 and n <= 2, "Must be between 0 and 2"
+--             end,
+--           },
+--           max_completion_tokens = {
+--             order = 3,
+--             mapping = "parameters",
+--             type = "integer",
+--             optional = true,
+--             default = nil,
+--             desc = "An upper bound for the number of tokens that can be generated for a completion.",
+--             validate = function(n)
+--               return n > 0, "Must be greater than 0"
+--             end,
+--           },
+--           stop = {
+--             order = 4,
+--             mapping = "parameters",
+--             type = "string",
+--             optional = true,
+--             default = nil,
+--             desc = "Sets the stop sequences to use. When this pattern is encountered the LLM will stop generating text and return. Multiple stop patterns may be set by specifying multiple separate stop parameters in a modelfile.",
+--             validate = function(s)
+--               return s:len() > 0, "Cannot be an empty string"
+--             end,
+--           },
+--           logit_bias = {
+--             order = 5,
+--             mapping = "parameters",
+--             type = "map",
+--             optional = true,
+--             default = nil,
+--             desc = "Modify the likelihood of specified tokens appearing in the completion. Maps tokens (specified by their token ID) to an associated bias value from -100 to 100. Use https://platform.openai.com/tokenizer to find token IDs.",
+--             subtype_key = {
+--               type = "integer",
+--             },
+--             subtype = {
+--               type = "integer",
+--               validate = function(n)
+--                 return n >= -100 and n <= 100, "Must be between -100 and 100"
+--               end,
+--             },
+--           },
+--         },
+--       })
+--     end,
+--   },
+-- })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
