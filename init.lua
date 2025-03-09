@@ -945,12 +945,12 @@ require('lazy').setup({
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
-{
+  {
 
-  'github/copilot.vim',
-  opts = {},
-  config = function() end,
-},
+    'github/copilot.vim',
+    opts = {},
+    config = function() end,
+  },
 
   -- {
   --   'olimorris/codecompanion.nvim',
@@ -1113,10 +1113,47 @@ require('lazy').setup({
     opts = {},
     config = function() end,
   },
+
+
+  -- { 'bbjornstad/fold-preview.nvim',
+  --    requires = 'bbjornstad/keymap-amend.nvim',
+  --    config = function()
+  --       require('fold-preview').setup({
+  --          -- Your configuration goes here.
+  --       })
+  --    end
+  -- },
+
+  { 'bbjornstad/pretty-fold.nvim', 
+     -- Pretty Fold is a lua plugin for Neovim which provides framework for easy foldtext customization. 
+     config = function()
+     require('pretty-fold').setup{
+	     'py', {
+		     process_comment_signs = "delete",
+		     comment_signs = { '#' },
+         add_close_pattern = false,
+	     }
+     }
+     --require('pretty-fold.preview').setup()
+     end
+  },
+
+
   -- {
-  --   'iamcco/markdown-preview.nvim',
-  --   opts = {},
+  --   'tmhedberg/SimpylFold',
+  --   ft = 'python',
   --   config = function() end,
+  --   init = function()
+  --     -- Load the colorscheme here.
+  --     -- Like many other themes, this one has different styles, and you could load
+  --     -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+  --
+  --     vim.g.SimpylFold_docstring_preview = 1
+  --     vim.g.SimpylFold_fold_docstring = 1
+  --     vim.g.SimpylFold_fold_blank = 0
+  --
+  --
+  --   end,
   -- },
   {
     'iamcco/markdown-preview.nvim',
@@ -1283,12 +1320,14 @@ vim.keymap.set('n', '<localleader>m', ':lua _G.toggleProse()<cr>', { noremap = t
 vim.keymap.set('n', '<localleader>l', ':Lazy<cr>', { noremap = true, silent = true, desc = 'Lazy Plugin Manager' })
 
 -- set up folding
-vim.opt.foldmethod = 'expr'
+-- vim.opt.foldmethod = 'expr'
 vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-vim.opt.foldlevel = 99
+vim.opt.foldtext = 'v:lua.vim.treesitter.foldtext()'
+-- vim.opt.foldmethod = 'expr'
+-- vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
+vim.opt.foldlevel = 100
 vim.opt.foldlevelstart = 5
 vim.opt.foldnestmax = 4
-vim.opt.foldtext = '-->'
 
 vim.keymap.set('n', '<F8>', ':TagbarToggle<CR>')
 
@@ -1339,6 +1378,23 @@ require('colorizer').setup {
   '!vim', -- Exclude vim from highlighting.
   -- Exclusion Only makes sense if '*' is specified!
 }
+
+
+vim.api.nvim_create_autocmd('FileType', {
+	pattern = 'python',
+	group = vim.api.nvim_create_augroup('py_indent', { clear = true }),
+	callback = function ()
+		vim.opt.foldmethod = 'indent'
+	end,
+})
+
+
+-- require('nvim-treesitter.configs').setup {
+--   pyfold = {
+--     enable = true,
+--     custom_foldtext = true, -- Sets provided foldtext on window where module is active
+--   },
+-- }
 
 -- require('codecompanion').setup {
 --   adapters = {
@@ -1430,9 +1486,9 @@ require('colorizer').setup {
 --   },
 -- }
 
-        -- gemini = {
-        --   api_key = os.getenv 'GEMINI_API_KEY',
-        -- },
+-- gemini = {
+--   api_key = os.getenv 'GEMINI_API_KEY',
+-- },
 -- require('codecompanion').setup {
 --   -- display = {
 --   --   action_palette = {
