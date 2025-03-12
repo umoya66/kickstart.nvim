@@ -945,12 +945,12 @@ require('lazy').setup({
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
-{
+  {
 
-  'github/copilot.vim',
-  opts = {},
-  config = function() end,
-},
+    'github/copilot.vim',
+    opts = {},
+    config = function() end,
+  },
 
   -- {
   --   'olimorris/codecompanion.nvim',
@@ -1132,6 +1132,20 @@ require('lazy').setup({
 
   end
   },
+
+  { 'bbjornstad/pretty-fold.nvim', 
+     -- Pretty Fold is a lua plugin for Neovim which provides framework for easy foldtext customization. 
+     config = function()
+     require('pretty-fold').setup{
+	     'py', {
+		     process_comment_signs = "delete",
+		     comment_signs = { '#' },
+         add_close_pattern = false,
+	     }
+     }
+     end
+  },
+
   {
     'iamcco/markdown-preview.nvim',
     cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
@@ -1313,12 +1327,14 @@ vim.keymap.set('n', '<localleader>l', ':Lazy<cr>', { noremap = true, silent = tr
 --
 --
 -- set up folding
-vim.opt.foldmethod = 'expr'
+-- vim.opt.foldmethod = 'expr'
 vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-vim.opt.foldlevel = 99
+vim.opt.foldtext = 'v:lua.vim.treesitter.foldtext()'
+-- vim.opt.foldmethod = 'expr'
+-- vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
+vim.opt.foldlevel = 100
 vim.opt.foldlevelstart = 5
 vim.opt.foldnestmax = 4
-vim.opt.foldtext = '-->'
 
 vim.keymap.set('n', '<F8>', ':TagbarToggle<CR>')
 
@@ -1369,6 +1385,23 @@ require('colorizer').setup {
   '!vim', -- Exclude vim from highlighting.
   -- Exclusion Only makes sense if '*' is specified!
 }
+
+
+vim.api.nvim_create_autocmd('FileType', {
+	pattern = 'python',
+	group = vim.api.nvim_create_augroup('py_indent', { clear = true }),
+	callback = function ()
+		vim.opt.foldmethod = 'indent'
+	end,
+})
+
+
+-- require('nvim-treesitter.configs').setup {
+--   pyfold = {
+--     enable = true,
+--     custom_foldtext = true, -- Sets provided foldtext on window where module is active
+--   },
+-- }
 
 -- require('codecompanion').setup {
 --   adapters = {
@@ -1460,9 +1493,9 @@ require('colorizer').setup {
 --   },
 -- }
 
-        -- gemini = {
-        --   api_key = os.getenv 'GEMINI_API_KEY',
-        -- },
+-- gemini = {
+--   api_key = os.getenv 'GEMINI_API_KEY',
+-- },
 -- require('codecompanion').setup {
 --   -- display = {
 --   --   action_palette = {
