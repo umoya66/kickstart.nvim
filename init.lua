@@ -1113,11 +1113,25 @@ require('lazy').setup({
     opts = {},
     config = function() end,
   },
-  -- {
-  --   'iamcco/markdown-preview.nvim',
-  --   opts = {},
-  --   config = function() end,
-  -- },
+
+  {
+    'alexghergh/nvim-tmux-navigation', config = function()
+
+    local nvim_tmux_nav = require('nvim-tmux-navigation')
+
+    nvim_tmux_nav.setup {
+        disable_when_zoomed = true -- defaults to false
+    }
+
+    vim.keymap.set('n', "<C-h>", nvim_tmux_nav.NvimTmuxNavigateLeft)
+    vim.keymap.set('n', "<C-j>", nvim_tmux_nav.NvimTmuxNavigateDown)
+    vim.keymap.set('n', "<C-k>", nvim_tmux_nav.NvimTmuxNavigateUp)
+    vim.keymap.set('n', "<C-l>", nvim_tmux_nav.NvimTmuxNavigateRight)
+    vim.keymap.set('n', "<C-\\>", nvim_tmux_nav.NvimTmuxNavigateLastActive)
+    vim.keymap.set('n', "<C-Space>", nvim_tmux_nav.NvimTmuxNavigateNext)
+
+  end
+  },
   {
     'iamcco/markdown-preview.nvim',
     cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
@@ -1282,6 +1296,22 @@ end
 vim.keymap.set('n', '<localleader>m', ':lua _G.toggleProse()<cr>', { noremap = true, silent = true, desc = 'Toggle Writing Mode' })
 vim.keymap.set('n', '<localleader>l', ':Lazy<cr>', { noremap = true, silent = true, desc = 'Lazy Plugin Manager' })
 
+-- tmux navigator
+-- nnoremap <silent> <C-h> <Cmd>NvimTmuxNavigateLeft<CR>
+-- vim.keymap.set('n', '<C-h>', ':NvimTmuxNavigateLeft', { noremap = true, silent = true, desc = 'Tmux navigate left' })
+-- -- nnoremap <silent> <C-j> <Cmd>NvimTmuxNavigateDown<CR>
+-- vim.keymap.set('n', '<C-j>', ':NvimTmuxNavigateDown', { noremap = true, silent = true, desc = 'Tmux navigate down' })
+-- -- nnoremap <silent> <C-k> <Cmd>NvimTmuxNavigateUp<CR>
+-- vim.keymap.set('n', '<C-k>', ':NvimTmuxNavigateUp', { noremap = true, silent = true, desc = 'Tmux navigate up' })
+-- -- nnoremap <silent> <C-l> <Cmd>NvimTmuxNavigateRight<CR>
+-- vim.keymap.set('n', '<C-l>', ':NvimTmuxNavigateRight', { noremap = true, silent = true, desc = 'Tmux navigate right' })
+-- -- nnoremap <silent> <C-\> <Cmd>NvimTmuxNavigateLastActive<CR>
+-- vim.keymap.set('n', '<C-\\>', ':NvimTmuxNavigateLastActive', { noremap = true, silent = true, desc = 'Tmux navigate last active' })
+-- -- nnoremap <silent> <C-Space> <Cmd>NvimTmuxNavigateNext<CR>
+-- vim.keymap.set('n', '<C-Space>', ':NvimTmuxNavigateNext', { noremap = true, silent = true, desc = 'Tmux navigate next' })
+--
+--
+--
 -- set up folding
 vim.opt.foldmethod = 'expr'
 vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
