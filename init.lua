@@ -1310,6 +1310,10 @@ end
 vim.keymap.set('n', '<localleader>m', ':lua _G.toggleProse()<cr>', { noremap = true, silent = true, desc = 'Toggle Writing Mode' })
 vim.keymap.set('n', '<localleader>l', ':Lazy<cr>', { noremap = true, silent = true, desc = 'Lazy Plugin Manager' })
 
+--vnoremap // y/\V<C-R>=escape(@",'/\')<CR><CR>
+vim.keymap.set('v', '//', 'y/\\V<C-R>=escape(@",\'/\\\')<CR><CR>', { noremap = true, silent = true, desc = 'Search selected text' })
+
+
 -- tmux navigator
 -- nnoremap <silent> <C-h> <Cmd>NvimTmuxNavigateLeft<CR>
 -- vim.keymap.set('n', '<C-h>', ':NvimTmuxNavigateLeft', { noremap = true, silent = true, desc = 'Tmux navigate left' })
