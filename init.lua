@@ -154,7 +154,7 @@ vim.opt.inccommand = 'split'
 vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.opt.scrolloff = 10
+vim.opt.scrolloff = 3
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -242,19 +242,7 @@ require('lazy').setup({
   --    require('gitsigns').setup({ ... })
   --
   -- See `:help gitsigns` to understand what the configuration keys do
-  { -- Adds git related signs to the gutter, as well as utilities for managing changes
-    'lewis6991/gitsigns.nvim',
-    opts = {
-      signs = {
-        add = { text = '+' },
-        change = { text = '~' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-    },
-  },
-
+  --
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
   -- This is often very useful to both group configuration, as well as handle
@@ -318,8 +306,10 @@ require('lazy').setup({
 
       -- Document existing key chains
       spec = {
+        { '<leader>a', group = '[A]I CodeCompanion', mode = { 'n', 'v' } },
         { '<leader>c', group = '[C]ode', mode = { 'n', 'x' } },
         { '<leader>d', group = '[D]ocument' },
+        { '<leader>g', group = 'Hi[G]hLight', mode = { 'n', 'x' } },
         { '<leader>r', group = '[R]ename' },
         { '<leader>s', group = '[S]earch' },
         { '<leader>w', group = '[W]orkspace' },
@@ -358,7 +348,8 @@ require('lazy').setup({
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
-      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
+      -- { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
+      { 'echasnovski/mini.icons', version = false, enabled = vim.g.have_nerd_font },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -393,6 +384,22 @@ require('lazy').setup({
         -- },
         -- pickers = {}
         extensions = {
+          --   file_browser = {
+          --     -- theme = "ivy",
+          --     -- require("telescope.themes").get_dropdown {
+          --     --   previewer = false,
+          --     --   -- even more opts
+          --     -- },
+          --     mappings = {
+          --       ['i'] = {
+          --         -- your custom insert mode mappings
+          --       },
+          --       ['n'] = {
+          --         -- your custom normal mode mappings
+          --       },
+          --     },
+          --   },
+
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
           },
@@ -402,6 +409,7 @@ require('lazy').setup({
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
+      pcall(require('telescope').load_extension 'file_browser')
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
@@ -416,6 +424,8 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+      vim.keymap.set('n', '<space>sb', ':Telescope file_browser<CR>', { desc = '[B] Browse Files' })
+      vim.keymap.set('n', '<space>"', ':Telescope registers<CR>', { desc = '["] Show Registers' })
 
       -- nnoremap <leader>ff <cmd>Telescope find_files<cr>
       -- nnoremap <leader>fg <cmd>Telescope live_grep<cr>
@@ -482,6 +492,14 @@ require('lazy').setup({
       -- Allows extra capabilities provided by nvim-cmp
       'hrsh7th/cmp-nvim-lsp',
     },
+    opts = {
+      diagnostics = {
+        float = {
+          border = 'rounded',
+        },
+      },
+    },
+
     config = function()
       -- Brief aside: **What is LSP?**
       --
@@ -595,7 +613,8 @@ require('lazy').setup({
           -- code, if the language server you are using supports them
           --
           -- This may be unwanted, since they displace some of your code
-          if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
+          -- if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
+          if client then
             map('<leader>th', function()
               vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
             end, '[T]oggle Inlay [H]ints')
@@ -604,14 +623,20 @@ require('lazy').setup({
       })
 
       -- Change diagnostic symbols in the sign column (gutter)
-      -- if vim.g.have_nerd_font then
-      --   local signs = { ERROR = '', WARN = '', INFO = '', HINT = '' }
-      --   local diagnostic_signs = {}
-      --   for type, icon in pairs(signs) do
-      --     diagnostic_signs[vim.diagnostic.severity[type]] = icon
-      --   end
-      --   vim.diagnostic.config { signs = { text = diagnostic_signs } }
-      -- end
+      if vim.g.have_nerd_font then
+        local signs = { ERROR = '', WARN = '', INFO = '', HINT = '' }
+        local diagnostic_signs = {}
+        for type, icon in pairs(signs) do
+          diagnostic_signs[vim.diagnostic.severity[type]] = icon
+        end
+        vim.diagnostic.config { signs = { text = diagnostic_signs } }
+      end
+
+      -- set diagnostics to popup on cursor over - too obtrusive...
+      -- vim.o.updatetime = 250
+      -- vim.cmd [[autocmd CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {focus=cursor, border='rounded'})]]
+
+      -- vim.diagnostic.open_float()
 
       -- LSP servers and clients are able to communicate to each other what features they support.
       --  By default, Neovim doesn't support everything that is in the LSP specification.
@@ -632,7 +657,95 @@ require('lazy').setup({
       local servers = {
         -- clangd = {},
         -- gopls = {},
-        pyright = {},
+        pyright = {
+          -- enabled = true,
+          enabled = false,
+          --   -- settings = {
+          --   --   python = {
+          --   --     analysis = {
+          --   --       -- useLibraryCodeForTypes = true,
+          --   --       -- diagnosticSeverityOverrides = {
+          --   --       --   reportUnusedVariable = 'warning', -- or anything
+          --   --       -- },
+          --   --       typeCheckingMode = 'standard',
+          --   --     },
+          --   --   },
+          --   -- },
+        },
+        basedpyright = {
+          -- capabilities = (function()
+          --   -- local capabilities = vim.lsp.protocol.make_client_capabilities()
+          --   -- capabilities.textDocument.publishDiagnostics.tagSupport.valueSet = { 2 }
+          --   return capabilities
+          -- end)(),
+          position_encoding = 'utf-16',
+          enabled = true,
+          -- enabled = false,
+          -- analysis = {
+          --   diagnosticMode = 'openFilesOnly',
+          --   inlayHints = {
+          --     callArgumentNames = true,
+          -- },
+          -- },
+          settings = {
+            basedpyright = {
+              analysis = {
+                -- useLibraryCodeForTypes = true,
+                -- typeCheckingMode = 'basic',
+                diagnosticMode = 'workspace',
+                -- autoSearchPath = true,
+                -- inlayHints = {
+                --   callArgumentNames = true,
+                -- },
+                diagnosticSeverityOverrides = {
+                  reportUnknownMemberType = false,
+                  reportUnknownArgumentType = false,
+                  reportUnknownVariableType = false,
+                  reportMissingImports = false,
+                  reportAny = false,
+                  reportUnknownParameterType = false,
+                  reportMissingParameterType = false,
+                  -- reportAny = false,
+                  -- reportUnusedCallResult = false,
+                  -- reportMissingTypeArgument = false,
+                  -- reportMissingParameterType = false,
+                  -- reportUnknownArgumentType = false,
+                  -- reportUnknownLambdaType = false,
+                  -- reportUnknownMemberType = false,
+                  -- reportUnknownParameterType = false,
+                  -- reportUnknownVariableType = false
+                },
+                stubPath = '/home/mhatton/dev/open/nuke-python-stubs/stubs/',
+                -- extraPaths = {
+                --     '...',
+                --     '...',
+                -- },
+              },
+              -- python = {
+              --   venvPath = '/path/to/venv',
+              --   venv = 'venv',
+              -- },
+            },
+          },
+        },
+        -- pyright = {
+        --   -- capabilities = (function()
+        --   --   local capabilities = vim.lsp.protocol.make_client_capabilities()
+        --   --   capabilities.textDocument.publishDiagnostics.tagSupport.valueSet = { 2 }
+        --   --   return capabilities
+        --   -- end)(),
+        --   settings = {
+        --     python = {
+        --       analysis = {
+        --         -- useLibraryCodeForTypes = true,
+        --         -- diagnosticSeverityOverrides = {
+        --         --   reportUnusedVariable = 'warning', -- or anything
+        --         -- },
+        --         typeCheckingMode = 'standard',
+        --       },
+        --     },
+        --   },
+        -- },
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -731,10 +844,15 @@ require('lazy').setup({
         -- Conform can also run multiple formatters sequentially
         -- python = { 'isort', 'black' },
         python = { 'black' },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
       },
+      formatters = {
+        black = {
+          prepend_args = { '--line-length', '150' },
+        },
+      },
+      --
+      -- You can use 'stop_after_first' to run the first available formatter from the list
+      -- javascript = { "prettierd", "prettier", stop_after_first = true },
     },
   },
 
@@ -899,8 +1017,23 @@ require('lazy').setup({
       -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
-      require('mini.surround').setup()
+      require('mini.surround').setup {
+        mappings = {
+          add = 'csa', -- Add surrounding in Normal and Visual modes
+          delete = 'ds', -- Delete surrounding
+          -- delete = 'csd', -- Delete surrounding
+          find = 'csf', -- Find surrounding (to the right)
+          find_left = 'csF', -- Find surrounding (to the left)
+          highlight = 'csh', -- Highlight surrounding
+          replace = 'csr', -- Replace surrounding
+          update_n_lines = 'csn', -- Update `n_lines`
 
+          suffix_last = 'l', -- Suffix to search with "prev" method
+          suffix_next = 'n', -- Suffix to search with "next" method
+        },
+      }
+
+      require('mini.pairs').setup()
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
@@ -945,32 +1078,90 @@ require('lazy').setup({
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
-{
-
-  'github/copilot.vim',
-  opts = {},
-  config = function() end,
-},
 
   -- {
-  --   'olimorris/codecompanion.nvim',
-  --   config = true,
-  --   dependencies = {
-  --     'nvim-lua/plenary.nvim',
-  --     'nvim-treesitter/nvim-treesitter',
-  --   },
-  --   opts = {
-  --     strategies = {
-  --       -- Change the default chat adapter
-  --       chat = {
-  --         adapter = 'openai',
-  --       },
-  --     },
-  --     opts = {
-  --       -- Set debug logging
-  --       log_level = 'DEBUG',
-  --     },
-  --   },
+  --   'github/copilot.vim',
+  --   opts = {},
+  --   config = function() end,
+  -- },
+
+  {
+    'nvim-telescope/telescope-file-browser.nvim',
+    dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim' },
+  },
+
+  {
+    'olimorris/codecompanion.nvim',
+    config = true,
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'nvim-treesitter/nvim-treesitter',
+    },
+    -- config = function()
+    --   require("codecompanion").setup {
+    opts = {
+      strategies = {
+        -- Change the default chat adapter
+        chat = {
+          -- adapter = 'openai',
+          adapter = 'gemini',
+        },
+        inline = {
+          adapter = 'gemini',
+        },
+      },
+    },
+    gemini = function()
+      return require('codecompanion.adapters').extend('gemini', {
+        schema = {
+          model = {
+            default = 'gemini-2.0-flash',
+          },
+        },
+        env = {
+          api_key = os.getenv 'GEMINI_API_KEY',
+        },
+      })
+    end,
+    keys = {
+      {
+        '<leader>aa',
+        '<cmd>CodeCompanionChat Toggle<cr>',
+        desc = 'Toggle Chat',
+        mode = { 'n', 'v' },
+      },
+      {
+        '<leader>ao',
+        '<cmd>CodeCompanionActions<cr>',
+        desc = 'Options',
+        mode = { 'n', 'v' },
+      },
+      {
+        '<leader>av',
+        '<cmd>CodeCompanionChat Add<cr>',
+        desc = 'Add visual selected',
+        mode = { 'v' },
+      },
+    },
+    keymaps = {
+      -- reset original bindings (conflicts with existing lazyvim bindings)
+      ['gc'] = '',
+      ['ga'] = '',
+      ['gs'] = '',
+      ['gt'] = '',
+      ['<C-c>'] = '<esc>',
+
+      ['<C-s>'] = 'keymaps.save',
+      ['<C-x>'] = 'keymaps.close',
+      ['q'] = 'keymaps.stop',
+      ['<leader>agc'] = 'keymaps.clear', -- don't use (i just open new one)
+      ['<leader>aga'] = 'keymaps.codeblock',
+      ['<leader>ags'] = 'keymaps.save_chat',
+      ['<leader>agt'] = 'keymaps.add_agent', -- don't use
+      [']'] = 'keymaps.next', -- don't use
+      ['['] = 'keymaps.previous', -- don't use
+    },
+  },
   -- },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
@@ -987,7 +1178,7 @@ require('lazy').setup({
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   -- require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
@@ -1093,10 +1284,30 @@ require('lazy').setup({
     opts = {},
     config = function() end,
   },
+  -- replaced with mini.vim mini.surround
+  -- {
+  --   'tpope/vim-surround',
+  --   opts = {},
+  --   config = function() end,
+  -- },
   {
-    'tpope/vim-surround',
-    opts = {},
-    config = function() end,
+    'azabiong/vim-highlighter',
+    init = function() end,
+    config = function()
+      -- settings
+
+      vim.keymap.set('n', '<leader>gs', '<cmd>Hi +<CR>', { desc = 'Hi[g]hlight [S]et' })
+      vim.keymap.set('n', '<leader>ge', '<cmd>Hi -<CR>', { desc = 'Hi[g]hlight [E]rase' })
+      vim.keymap.set('n', '<leader>gc', '<cmd>Hi clear<CR>', { desc = 'Hi[g]hlight [C]lear' })
+      vim.keymap.set('n', '<leader>gl', '<cmd>Hi ls<CR>', { desc = 'Hi[g]hlight [L]ist' })
+      vim.keymap.set('n', 'gj', '<cmd>Hi ><CR>', { desc = 'Hi[g]hlight next' })
+      vim.keymap.set('n', 'gk', '<cmd>Hi <<CR>', { desc = 'Hi[g]hlight previous' })
+      vim.keymap.set('n', 'gh', '<cmd>Hi }<CR>', { desc = 'Hi[g]hlight jump forward same hl' })
+      vim.keymap.set('n', 'gl', '<cmd>Hi {<CR>', { desc = 'Hi[g]hlight jump back same hl' })
+      -- vim.keymap.set('n', 'gl', '<cmd>Hi ]<CR>', { desc = 'Hi[g]hlight jump forward any hl' })
+      -- vim.keymap.set('n', 'gl', '<cmd>Hi [<CR>', { desc = 'Hi[g]hlight jump back any hl' })
+      -- vim.keymap.set('n', '<leader>gs', '<cmd>HighlightedyankSetSL<CR>', { desc = 'Highlightedyank SetSL' })
+    end,
   },
   {
     'preservim/tagbar',
@@ -1113,11 +1324,40 @@ require('lazy').setup({
     opts = {},
     config = function() end,
   },
-  -- {
-  --   'iamcco/markdown-preview.nvim',
-  --   opts = {},
-  --   config = function() end,
-  -- },
+
+  {
+    'alexghergh/nvim-tmux-navigation',
+    config = function()
+      local nvim_tmux_nav = require 'nvim-tmux-navigation'
+
+      nvim_tmux_nav.setup {
+        disable_when_zoomed = true, -- defaults to false
+      }
+
+      vim.keymap.set('n', '<C-h>', nvim_tmux_nav.NvimTmuxNavigateLeft)
+      vim.keymap.set('n', '<C-j>', nvim_tmux_nav.NvimTmuxNavigateDown)
+      vim.keymap.set('n', '<C-k>', nvim_tmux_nav.NvimTmuxNavigateUp)
+      vim.keymap.set('n', '<C-l>', nvim_tmux_nav.NvimTmuxNavigateRight)
+      vim.keymap.set('n', '<C-\\>', nvim_tmux_nav.NvimTmuxNavigateLastActive)
+      vim.keymap.set('n', '<C-Space>', nvim_tmux_nav.NvimTmuxNavigateNext)
+    end,
+  },
+
+  {
+    'bbjornstad/pretty-fold.nvim',
+    -- Pretty Fold is a lua plugin for Neovim which provides framework for easy foldtext customization.
+    config = function()
+      require('pretty-fold').setup {
+        'py',
+        {
+          process_comment_signs = 'delete',
+          comment_signs = { '#' },
+          add_close_pattern = false,
+        },
+      }
+    end,
+  },
+
   {
     'iamcco/markdown-preview.nvim',
     cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
@@ -1127,6 +1367,158 @@ require('lazy').setup({
     end,
     ft = { 'markdown' },
   },
+
+  {
+    'chaoren/vim-wordmotion',
+    opts = {},
+    config = function() end,
+  },
+
+  {
+    '2kabhishek/markit.nvim',
+    -- config = load_config('tools.marks'),
+    config = function()
+      require('markit').setup {
+        -- whether to map keybinds or not. default true
+        default_mappings = true,
+        -- which builtin marks to show. default {}
+        builtin_marks = { '.', '<', '>', '^' },
+        -- whether movements cycle back to the beginning/end of buffer. default true
+        cyclic = true,
+        -- whether the shada file is updated after modifying uppercase marks. default false
+        force_write_shada = false,
+        -- how often (in ms) to redraw signs/recompute mark positions.
+        -- higher value means better performance but may cause visual lag,
+        -- while lower value may cause performance penalties. default 150.
+        refresh_interval = 150,
+        -- sign priorities for each type of mark - builtin marks, uppercase marks, lowercase
+        -- marks, and bookmarks.
+        -- can be either a table with all/none of the keys, or a single number, in which case
+        -- the priority applies to all marks.
+        -- default 10.
+        sign_priority = { lower = 10, upper = 15, builtin = 8, bookmark = 20 },
+        -- disables mark tracking for specific filetypes. default {}
+        excluded_filetypes = {},
+        -- disables mark tracking for specific buftypes. default {}
+        excluded_buftypes = {},
+        -- marks.nvim allows you to configure up to 10 bookmark groups, each with its own
+        -- sign/virttext. Bookmarks can be used to group together positions and quickly move
+        -- across multiple buffers. default sign is '!@#$%^&*()' (from 0 to 9), and
+        -- default virt_text is "".
+        bookmark_0 = {
+          sign = '⚑',
+          virt_text = 'hello world',
+          -- explicitly prompt for a virtual line annotation when setting a bookmark from this group.
+          -- defaults to false.
+          annotate = false,
+        },
+        mappings = {},
+      }
+    end,
+
+    event = { 'BufReadPre', 'BufNewFile' },
+  },
+  -- {
+  --   'Vigemus/iron.nvim',
+  --   opts = {},
+  --   -- config = function() end,
+  --   config = function()
+  --     local iron = require 'iron.core'
+  --     local view = require 'iron.view'
+  --     local common = require 'iron.fts.common'
+  --
+  --     iron.setup {
+  --       config = {
+  --         -- Whether a repl should be discarded or not
+  --         scratch_repl = true,
+  --         -- Your repl definitions come here
+  --         repl_definition = {
+  --           sh = {
+  --             -- Can be a table or a function that
+  --             -- returns a table (see below)
+  --             command = { 'zsh' },
+  --           },
+  --           python = {
+  --             command = { 'python3' }, -- or { "ipython", "--no-autoindent" }
+  --             format = common.bracketed_paste_python,
+  --             block_dividers = { '# %%', '#%%' },
+  --           },
+  --         },
+  --         -- set the file type of the newly created repl to ft
+  --         -- bufnr is the buffer id of the REPL and ft is the filetype of the
+  --         -- language being used for the REPL.
+  --         repl_filetype = function(bufnr, ft)
+  --           return ft
+  --           -- or return a string name such as the following
+  --           -- return "iron"
+  --         end,
+  --         -- How the repl window will be displayed
+  --         -- See below for more information
+  --         repl_open_cmd = view.bottom(40),
+  --
+  --         -- repl_open_cmd can also be an array-style table so that multiple
+  --         -- repl_open_commands can be given.
+  --         -- When repl_open_cmd is given as a table, the first command given will
+  --         -- be the command that `IronRepl` initially toggles.
+  --         -- Moreover, when repl_open_cmd is a table, each key will automatically
+  --         -- be available as a keymap (see `keymaps` below) with the names
+  --         -- toggle_repl_with_cmd_1, ..., toggle_repl_with_cmd_k
+  --         -- For example,
+  --         --
+  --         -- repl_open_cmd = {
+  --         --   view.split.vertical.rightbelow("%40"), -- cmd_1: open a repl to the right
+  --         --   view.split.rightbelow("%25")  -- cmd_2: open a repl below
+  --         -- }
+  --       },
+  --       -- Iron doesn't set keymaps by default anymore.
+  --       -- You can set them here or manually add keymaps to the functions in iron.core
+  --       keymaps = {
+  --         toggle_repl = '<space>rr', -- toggles the repl open and closed.
+  --         -- If repl_open_command is a table as above, then the following keymaps are
+  --         -- available
+  --         -- toggle_repl_with_cmd_1 = "<space>rv",
+  --         -- toggle_repl_with_cmd_2 = "<space>rh",
+  --         restart_repl = '<space>rR', -- calls `IronRestart` to restart the repl
+  --         send_motion = '<space>sc',
+  --         visual_send = '<space>sc',
+  --         send_file = '<space>sf',
+  --         send_line = '<space>sl',
+  --         send_paragraph = '<space>sp',
+  --         send_until_cursor = '<space>su',
+  --         send_mark = '<space>sm',
+  --         send_code_block = '<space>sb',
+  --         send_code_block_and_move = '<space>sn',
+  --         mark_motion = '<space>mc',
+  --         mark_visual = '<space>mc',
+  --         remove_mark = '<space>md',
+  --         cr = '<space>s<cr>',
+  --         interrupt = '<space>s<space>',
+  --         exit = '<space>sq',
+  --         clear = '<space>cl',
+  --       },
+  --       -- If the highlight is on, you can change how it looks
+  --       -- For the available options, check nvim_set_hl
+  --       highlight = {
+  --         italic = true,
+  --       },
+  --       ignore_blank_lines = true, -- ignore blank lines when sending visual select lines
+  --     }
+  --
+  --     -- iron also has a list of commands, see :h iron-commands for all available commands
+  --     vim.keymap.set('n', '<space>rf', '<cmd>IronFocus<cr>')
+  --     vim.keymap.set('n', '<space>rh', '<cmd>IronHide<cr>')
+  --     --
+  --   end,
+  -- },
+
+  -- {
+  --   'bfredl/nvim-ipy',
+  --   opts = {},
+  --   config = function() end,
+  -- },
+
+
+  --- put plugins before this...
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
@@ -1147,7 +1539,15 @@ require('lazy').setup({
     --   lazy = '💤 ',
     -- },
   },
-})
+}) -- end of plugin setup
+--
+--
+--
+--
+--Plugin END
+--
+--
+--
 -- I write prose in markdown, all the following is to help with that.
 function _G.toggleProse()
   require('zen-mode').toggle {
@@ -1282,13 +1682,34 @@ end
 vim.keymap.set('n', '<localleader>m', ':lua _G.toggleProse()<cr>', { noremap = true, silent = true, desc = 'Toggle Writing Mode' })
 vim.keymap.set('n', '<localleader>l', ':Lazy<cr>', { noremap = true, silent = true, desc = 'Lazy Plugin Manager' })
 
+--vnoremap // y/\V<C-R>=escape(@",'/\')<CR><CR>
+vim.keymap.set('v', '//', "y/\\V<C-R>=escape(@\",'/\\')<CR><CR>", { noremap = true, silent = true, desc = 'Search selected text' })
+
+-- tmux navigator
+-- nnoremap <silent> <C-h> <Cmd>NvimTmuxNavigateLeft<CR>
+-- vim.keymap.set('n', '<C-h>', ':NvimTmuxNavigateLeft', { noremap = true, silent = true, desc = 'Tmux navigate left' })
+-- -- nnoremap <silent> <C-j> <Cmd>NvimTmuxNavigateDown<CR>
+-- vim.keymap.set('n', '<C-j>', ':NvimTmuxNavigateDown', { noremap = true, silent = true, desc = 'Tmux navigate down' })
+-- -- nnoremap <silent> <C-k> <Cmd>NvimTmuxNavigateUp<CR>
+-- vim.keymap.set('n', '<C-k>', ':NvimTmuxNavigateUp', { noremap = true, silent = true, desc = 'Tmux navigate up' })
+-- -- nnoremap <silent> <C-l> <Cmd>NvimTmuxNavigateRight<CR>
+-- vim.keymap.set('n', '<C-l>', ':NvimTmuxNavigateRight', { noremap = true, silent = true, desc = 'Tmux navigate right' })
+-- -- nnoremap <silent> <C-\> <Cmd>NvimTmuxNavigateLastActive<CR>
+-- vim.keymap.set('n', '<C-\\>', ':NvimTmuxNavigateLastActive', { noremap = true, silent = true, desc = 'Tmux navigate last active' })
+-- -- nnoremap <silent> <C-Space> <Cmd>NvimTmuxNavigateNext<CR>
+-- vim.keymap.set('n', '<C-Space>', ':NvimTmuxNavigateNext', { noremap = true, silent = true, desc = 'Tmux navigate next' })
+--
+--
+--
 -- set up folding
-vim.opt.foldmethod = 'expr'
+-- vim.opt.foldmethod = 'expr'
 vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-vim.opt.foldlevel = 99
+vim.opt.foldtext = 'v:lua.vim.treesitter.foldtext()'
+-- vim.opt.foldmethod = 'expr'
+-- vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
+vim.opt.foldlevel = 100
 vim.opt.foldlevelstart = 5
 vim.opt.foldnestmax = 4
-vim.opt.foldtext = '-->'
 
 vim.keymap.set('n', '<F8>', ':TagbarToggle<CR>')
 
@@ -1300,6 +1721,9 @@ elseif vim.loop.os_uname().sysname == 'Darwin' then -- 'Darwin' is the sysname f
   -- Mac options here
   vim.g.tagbar_ctags_bin = '/opt/homebrew/Cellar/universal-ctags/p6.1.20241103.0/bin/ctags'
 end
+
+-- vim.diagnostic.open_float({ scope = "cursor", close_events = { "CursorMoved", "CursorMovedI", "BufHidden", "InsertCharPre", "WinLeave", }, })
+-- vim.diagnostic.open_float({ scope = "cursor", })
 
 -- colorizer set update
 ---- Attaches to every FileType mode
@@ -1339,6 +1763,85 @@ require('colorizer').setup {
   '!vim', -- Exclude vim from highlighting.
   -- Exclusion Only makes sense if '*' is specified!
 }
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'python',
+  group = vim.api.nvim_create_augroup('py_indent', { clear = true }),
+  callback = function()
+    vim.opt.foldmethod = 'indent'
+  end,
+})
+
+-- require('codecompanion').setup {
+--   display = {
+--     action_palette = {
+--       width = 95,
+--       height = 10,
+--       prompt = 'Prompt ', -- Prompt used for interactive LLM calls
+--       provider = 'default', -- default|telescope|mini_pick
+--       opts = {
+--         show_default_actions = true, -- Show the default actions in the action palette?
+--         show_default_prompt_library = true, -- Show the default prompt library in the action palette?
+--       },
+--     },
+--   },
+--   strategies = {
+--     inline = {
+--       keymaps = {
+--         accept_change = {
+--           modes = { n = 'ga' },
+--           description = 'Accept the suggested change',
+--         },
+--         reject_change = {
+--           modes = { n = 'gr' },
+--           description = 'Reject the suggested change',
+--         },
+--       },
+--     },
+--   },
+--   prompt_library = {
+--     ['Code Expert'] = {
+--       strategy = 'chat',
+--       description = 'Get some special advice from an LLM',
+--       opts = {
+--         mapping = '<LocalLeader>ae',
+--         modes = { 'v' },
+--         short_name = 'expert',
+--         auto_submit = true,
+--         stop_context_insertion = true,
+--         user_prompt = true,
+--       },
+--       prompts = {
+--         {
+--           role = 'system',
+--           content = function(context)
+--             return 'I want you to act as a senior '
+--               .. context.filetype
+--               .. ' developer. I will ask you specific questions and I want you to return concise explanations and codeblock examples.'
+--           end,
+--         },
+--         {
+--           role = 'user',
+--           content = function(context)
+--             local text = require('codecompanion.helpers.actions').get_code(context.start_line, context.end_line)
+--
+--             return 'I have the following code:\n\n```' .. context.filetype .. '\n' .. text .. '\n```\n\n'
+--           end,
+--           opts = {
+--             contains_code = true,
+--           },
+--         },
+--       },
+--     },
+--   },
+-- }
+
+-- require('nvim-treesitter.configs').setup {
+--   pyfold = {
+--     enable = true,
+--     custom_foldtext = true, -- Sets provided foldtext on window where module is active
+--   },
+-- }
 
 -- require('codecompanion').setup {
 --   adapters = {
@@ -1430,9 +1933,9 @@ require('colorizer').setup {
 --   },
 -- }
 
-        -- gemini = {
-        --   api_key = os.getenv 'GEMINI_API_KEY',
-        -- },
+-- gemini = {
+--   api_key = os.getenv 'GEMINI_API_KEY',
+-- },
 -- require('codecompanion').setup {
 --   -- display = {
 --   --   action_palette = {
