@@ -215,6 +215,20 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
+-- for copilot-cmp
+local has_words_before = function()
+  if vim.api.nvim_buf_get_option(0, 'buftype') == 'prompt' then
+    return false
+  end
+  local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+  return col ~= 0 and vim.api.nvim_buf_get_text(0, line - 1, 0, line - 1, col, {})[1]:match '^%s*$' == nil
+end
+
+--
+--
+--
+--
+--
 -- [[ Configure and install plugins ]]
 --
 --  To check the current status of your plugins, run
@@ -348,8 +362,8 @@ require('lazy').setup({
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
-      -- { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
-      { 'echasnovski/mini.icons', version = false, enabled = vim.g.have_nerd_font },
+      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
+      -- { 'echasnovski/mini.icons', version = false, enabled = vim.g.have_nerd_font },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -463,18 +477,19 @@ require('lazy').setup({
   },
 
   -- LSP Plugins
-  {
-    -- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
-    -- used for completion, annotations and signatures of Neovim apis
-    'folke/lazydev.nvim',
-    ft = 'lua',
-    opts = {
-      library = {
-        -- Load luvit types when the `vim.uv` word is found
-        { path = '${3rd}/luv/library', words = { 'vim%.uv' } },
-      },
-    },
-  },
+  -- {
+  --   -- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
+  --   -- used for completion, annotations and signatures of Neovim apis
+  --   'folke/lazydev.nvim',
+  --   ft = 'lua',
+  --   opts = {
+  --     library = {
+  --       -- Load luvit types when the `vim.uv` word is found
+  --       { path = '${3rd}/luv/library', words = { 'vim%.uv' } },
+  --     },
+  --   },
+  -- },
+
   {
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
@@ -490,7 +505,7 @@ require('lazy').setup({
       { 'j-hui/fidget.nvim', opts = {} },
 
       -- Allows extra capabilities provided by nvim-cmp
-      'hrsh7th/cmp-nvim-lsp',
+      -- 'hrsh7th/cmp-nvim-lsp',
     },
     opts = {
       diagnostics = {
@@ -643,7 +658,8 @@ require('lazy').setup({
       --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
       --  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
       local capabilities = vim.lsp.protocol.make_client_capabilities()
-      capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
+
+      -- capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
@@ -657,41 +673,16 @@ require('lazy').setup({
       local servers = {
         -- clangd = {},
         -- gopls = {},
-        pyright = {
-          -- enabled = true,
-          enabled = false,
-          --   -- settings = {
-          --   --   python = {
-          --   --     analysis = {
-          --   --       -- useLibraryCodeForTypes = true,
-          --   --       -- diagnosticSeverityOverrides = {
-          --   --       --   reportUnusedVariable = 'warning', -- or anything
-          --   --       -- },
-          --   --       typeCheckingMode = 'standard',
-          --   --     },
-          --   --   },
-          --   -- },
-        },
+        pyright = {},
         basedpyright = {
-          -- capabilities = (function()
-          --   -- local capabilities = vim.lsp.protocol.make_client_capabilities()
-          --   -- capabilities.textDocument.publishDiagnostics.tagSupport.valueSet = { 2 }
-          --   return capabilities
-          -- end)(),
-          position_encoding = 'utf-16',
-          enabled = true,
-          -- enabled = false,
-          -- analysis = {
-          --   diagnosticMode = 'openFilesOnly',
-          --   inlayHints = {
-          --     callArgumentNames = true,
-          -- },
-          -- },
+          -- enabled = true,
+          -- position_encoding = 'utf-16',
           settings = {
             basedpyright = {
               analysis = {
                 -- useLibraryCodeForTypes = true,
                 -- typeCheckingMode = 'basic',
+                autoSearchPaths = false,
                 diagnosticMode = 'workspace',
                 -- autoSearchPath = true,
                 -- inlayHints = {
@@ -705,19 +696,9 @@ require('lazy').setup({
                   reportAny = false,
                   reportUnknownParameterType = false,
                   reportMissingParameterType = false,
-                  -- reportAny = false,
-                  -- reportUnusedCallResult = false,
-                  -- reportMissingTypeArgument = false,
-                  -- reportMissingParameterType = false,
-                  -- reportUnknownArgumentType = false,
-                  -- reportUnknownLambdaType = false,
-                  -- reportUnknownMemberType = false,
-                  -- reportUnknownParameterType = false,
-                  -- reportUnknownVariableType = false
                 },
                 stubPath = '/home/mhatton/dev/open/nuke-python-stubs/stubs/',
                 -- extraPaths = {
-                --     '...',
                 --     '...',
                 -- },
               },
@@ -726,26 +707,10 @@ require('lazy').setup({
               --   venv = 'venv',
               -- },
             },
-          },
+          }, -- settings
         },
-        -- pyright = {
-        --   -- capabilities = (function()
-        --   --   local capabilities = vim.lsp.protocol.make_client_capabilities()
-        --   --   capabilities.textDocument.publishDiagnostics.tagSupport.valueSet = { 2 }
-        --   --   return capabilities
-        --   -- end)(),
-        --   settings = {
-        --     python = {
-        --       analysis = {
-        --         -- useLibraryCodeForTypes = true,
-        --         -- diagnosticSeverityOverrides = {
-        --         --   reportUnusedVariable = 'warning', -- or anything
-        --         -- },
-        --         typeCheckingMode = 'standard',
-        --       },
-        --     },
-        --   },
-        -- },
+        -- end of basedpyright
+        --
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -786,12 +751,12 @@ require('lazy').setup({
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
-      vim.list_extend(ensure_installed, {
-        'stylua', -- Used to format Lua code
-      })
+
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
+        ensure_installed = ensure_installed,
+        automatic_enable = false,
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
@@ -885,13 +850,19 @@ require('lazy').setup({
         },
       },
 
-      'saadparwaiz1/cmp_luasnip',
+      -- 'milanglacier/minuet-ai.nvim', -- Ensure minuet is loaded
+
+      -- 'saadparwaiz1/cmp_luasnip',
 
       -- Adds other completion capabilities.
       --  nvim-cmp does not ship with all sources by default. They are split
       --  into multiple repos for maintenance purposes.
-      'hrsh7th/cmp-nvim-lsp',
+      -- 'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-path',
+      'hrsh7th/cmp-buffer',
+      'hrsh7th/cmp-cmdline',
+      'zbirenbaum/copilot.lua',
+      'zbirenbaum/copilot-cmp',
     },
     config = function()
       -- See `:help cmp`
@@ -910,8 +881,18 @@ require('lazy').setup({
         -- For an understanding of why these mappings were
         -- chosen, you will need to read `:help ins-completion`
         --
+
+        formatting = {
+          format = require('lspkind').cmp_format {
+            mode = 'symbol',
+            symbol_map = { Copilot = '' },
+          },
+        },
+
         -- No, but seriously. Please read `:help ins-completion`, it is really good!
         mapping = cmp.mapping.preset.insert {
+          -- mapping = {
+
           -- Select the [n]ext item
           ['<C-n>'] = cmp.mapping.select_next_item(),
           -- Select the [p]revious item
@@ -929,12 +910,6 @@ require('lazy').setup({
           ['<CR>'] = cmp.mapping.confirm { select = true },
           ['<Tab>'] = cmp.mapping.select_next_item(),
           ['<S-Tab>'] = cmp.mapping.select_prev_item(),
-
-          -- If you prefer more traditional completion keymaps,
-          -- you can uncomment the following lines
-          --['<CR>'] = cmp.mapping.confirm { select = true },
-          --['<Tab>'] = cmp.mapping.select_next_item(),
-          --['<S-Tab>'] = cmp.mapping.select_prev_item(),
 
           -- Manually trigger a completion from nvim-cmp.
           --  Generally you don't need this, because nvim-cmp will display
@@ -960,22 +935,44 @@ require('lazy').setup({
             end
           end, { 'i', 's' }),
 
+          -- for copilot_cmp
+          --
+          ['<Tab>'] = vim.schedule_wrap(function(fallback)
+            if cmp.visible() and has_words_before() then
+              cmp.select_next_item { behavior = cmp.SelectBehavior.Select }
+            else
+              fallback()
+            end
+          end),
+
           -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
         },
-        sources = {
-          per_filetype = {
-            codecompanion = { 'codecompanion' },
-          },
-          {
-            name = 'lazydev',
-            -- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
-            group_index = 0,
-          },
-          { name = 'nvim_lsp' },
-          { name = 'luasnip' },
-          { name = 'path' },
+
+        sources = cmp.config.sources {
+          -- { name = 'codecompanion' }, -- Add codecompanion as a source
+          -- { name = "copilot"},
+          { name = 'copilot', group_index = 2 },
+          -- { name = 'nvim_lsp', group_index = 2 },
+          -- { name = 'buffer', group_index = 2},
+          -- { name = 'path', group_index = 2},
+          -- { name = 'minuet' }, -- Include minuet as a source
         },
+        -- sorting = {
+        --   priority_weight = 2,
+        --   comparators = {
+        --     -- require("copilot_cmp.comparators").prioritize, -- Prioritize Copilot entries
+        --     cmp.config.compare.offset,
+        --     cmp.config.compare.exact,
+        --     cmp.config.compare.score,
+        --     cmp.config.compare.recently_used,
+        --     cmp.config.compare.locality,
+        --     cmp.config.compare.kind,
+        --     cmp.config.compare.sort_text,
+        --     cmp.config.compare.length,
+        --     cmp.config.compare.order,
+        --   },
+        -- },
       }
     end,
   },
@@ -1053,6 +1050,7 @@ require('lazy').setup({
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
+
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
@@ -1079,11 +1077,117 @@ require('lazy').setup({
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
 
-  -- {
-  --   'github/copilot.vim',
-  --   opts = {},
-  --   config = function() end,
+  --   {
+  --   "yetone/avante.nvim",
+  --   -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
+  --   -- ⚠️ must add this setting! ! !
+  --   build = vim.fn.has("win32") ~= 0
+  --       and "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false"
+  --       or "make",
+  --   event = "VeryLazy",
+  --   version = false, -- Never set this value to "*"! Never!
+  --   ---@module 'avante'
+  --   ---@type avante.Config
+  --   opts = {
+  --     -- add any opts here
+  --     -- this file can contain specific instructions for your project
+  --     instructions_file = "avante.md",
+  --     -- for example
+  --     provider = "claude",
+  --     providers = {
+  --       claude = {
+  --         endpoint = "https://api.anthropic.com",
+  --         model = "claude-sonnet-4-20250514",
+  --         timeout = 30000, -- Timeout in milliseconds
+  --           extra_request_body = {
+  --             temperature = 0.75,
+  --             max_tokens = 20480,
+  --           },
+  --       },
+  --       moonshot = {
+  --         endpoint = "https://api.moonshot.ai/v1",
+  --         model = "kimi-k2-0711-preview",
+  --         timeout = 30000, -- Timeout in milliseconds
+  --         extra_request_body = {
+  --           temperature = 0.75,
+  --           max_tokens = 32768,
+  --         },
+  --       },
+  --     },
+  --   },
+  --   dependencies = {
+  --     "nvim-lua/plenary.nvim",
+  --     "MunifTanjim/nui.nvim",
+  --     --- The below dependencies are optional,
+  --     "nvim-mini/mini.pick", -- for file_selector provider mini.pick
+  --     "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
+  --     "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
+  --     "ibhagwan/fzf-lua", -- for file_selector provider fzf
+  --     "stevearc/dressing.nvim", -- for input provider dressing
+  --     "folke/snacks.nvim", -- for input provider snacks
+  --     "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
+  --     "zbirenbaum/copilot.lua", -- for providers='copilot'
+  --     {
+  --       -- support for image pasting
+  --       "HakonHarnes/img-clip.nvim",
+  --       event = "VeryLazy",
+  --       opts = {
+  --         -- recommended settings
+  --         default = {
+  --           embed_image_as_base64 = false,
+  --           prompt_for_file_name = false,
+  --           drag_and_drop = {
+  --             insert_mode = true,
+  --           },
+  --           -- required for Windows users
+  --           use_absolute_path = true,
+  --         },
+  --       },
+  --     },
+  --     {
+  --       -- Make sure to set this up properly if you have lazy=true
+  --       'MeanderingProgrammer/render-markdown.nvim',
+  --       opts = {
+  --         file_types = { "markdown", "Avante" },
+  --       },
+  --       ft = { "markdown", "Avante" },
+  --     },
+  --   },
   -- },
+
+  {
+    'zbirenbaum/copilot.lua',
+    opts = {},
+    requires = {
+      'copilotlsp-nvim/copilot-lsp', -- (optional) for NES functionality
+    },
+    cmd = 'Copilot',
+    event = 'InsertEnter',
+    config = function()
+      require('copilot').setup {
+        -- suggestion = { enabled = false }, -- disabled for copilot_cmp
+        panel = { enabled = false }, -- disabled for copilot_cmp
+        suggestion = { enabled = true, auto_trigger = false },
+      }
+    end,
+  },
+
+  {
+    'zbirenbaum/copilot-cmp',
+    dependencies = 'copilot.lua', -- Ensure copilot.lua is loaded first
+    after = { 'copilot.lua', 'nvim-cmp' },
+    config = function()
+      require('copilot_cmp').setup()
+    end,
+  },
+
+  {
+    'copilotlsp-nvim/copilot-lsp', -- (optional) for NES functionality
+  },
+
+  {
+    'onsails/lspkind.nvim',
+  },
 
   {
     'nvim-telescope/telescope-file-browser.nvim',
@@ -1097,17 +1201,94 @@ require('lazy').setup({
       'nvim-lua/plenary.nvim',
       'nvim-treesitter/nvim-treesitter',
     },
-    -- config = function()
-    --   require("codecompanion").setup {
     opts = {
       strategies = {
         -- Change the default chat adapter
         chat = {
           -- adapter = 'openai',
-          adapter = 'gemini',
+          -- adapter = 'gemini',
+          adapter = 'anthropic',
         },
         inline = {
-          adapter = 'gemini',
+          adapter = 'anthropic',
+        },
+      },
+      prompt_library = {
+        ['VFXCode'] = {
+          strategy = 'chat',
+          description = 'Some cool custom prompt you can do',
+          prompts = {
+            {
+              role = 'developer',
+              content = 'You are a highly experienced **Python VFX Pipeline Developer** specializing in visual effects production environments. Your core expertise lies in designing, implementing, and maintaining robust, scalable, and efficient pipeline tools and systems. You possess a deep, practical understanding of **OCIO (OpenColorIO) configurations** for precise color management across diverse applications and workflows. Furthermore, you are proficient with **Shotgun Toolkit (SGTK)**, leveraging its framework for asset management, task tracking, and seamless integration of various Digital Content Creation (DCC) applications. You are adept at writing clean, well-documented Python code, troubleshooting complex pipeline issues, and optimizing workflows to enhance artist productivity and data integrity.',
+            },
+          },
+        },
+        ['PyCode'] = {
+          strategy = 'chat',
+          description = 'Some cool custom prompt you can do',
+          prompts = {
+            {
+              role = 'developer',
+              content = "Act as an expert Python developer and help to design and create code blocks / modules as per the user specification. \
+              RULES: \
+              - MUST provide clean, production-grade, high quality code. \
+              - ASSUME the user is using python version 3.9+ \
+              - USE well-known python design patterns and object-oriented programming approaches \
+              - MUST provide code blocks with proper google style docstrings \
+              - MUST provide code blocks with input and return value type hinting. \
+              - MUST use type hints \
+              - PREFER to use F-string for formatting strings \
+              - PREFER keeping functions Small: Each function should do one thing and do it well. \
+              - USE @property: For getter and setter methods. \
+              - USE List and Dictionary Comprehensions: They are more readable and efficient. \
+              - USE generators for large datasets to save memory. \
+              - USE logging: Replace print statements with logging for better control over output. \
+              - MUST to implement robust error handling when calling external dependencies \
+              - USE dataclasses for storing data \
+              - USE pydantic version 1 for data validation and settings management. \
+              - Ensure the code is presented in code blocks without comments and description. \
+              - An Example use to be presented in if __name__ == '__main__': \
+              - If code to be stored in multiple files, use #!filepath to signal that in the same code block.",
+            },
+          },
+        },
+        ['PyCodeB'] = {
+          strategy = 'chat',
+          description = 'Some cool custom prompt you can do',
+          prompts = {
+            {
+              role = 'developer',
+              content = "You are an expert Python developer tasked with analyzing and improving a piece of Python code. \
+                     First, examine the following Python code: \
+                     <python_code> \
+                     {{PYTHON_CODE}} \
+                     </python_code> \
+                     Conduct an in-depth analysis of the code. Consider the following aspects: \
+                       Code structure and organization \
+                       Naming conventions and readability \
+                       Efficiency and performance \
+                       Potential bugs or errors \
+                       Adherence to Python best practices and PEP 8 guidelines \
+                       Use of appropriate data structures and algorithms \
+                       Error handling and edge cases \
+                       Modularity and reusability \
+                       Comments and documentation \
+                     Write your analysis inside <analysis> tags. Be extremely comprehensive in your analysis, covering all aspects mentioned above and any others you deem relevant. \
+                     Now, consider the following identified issues: \
+                     <identified_issues> \
+                     {{IDENTIFIED_ISSUES}} \
+                     </identified_issues> \
+                     Using chain of thought prompting, explain how to fix these issues. Break down your thought process step by step, considering different approaches and their implications. Write your explanation inside <fix_explanation> tags. \
+                     Based on your analysis and the fixes you've proposed, come up with a search term that might be useful to find additional information or solutions. Write your search term inside <search_term> tags. \
+                     Use the Perplexity plugin to search for information using the search term you created. Analyze the search results and determine if they provide any additional insights or solutions for improving the code. \
+                     Finally, provide the full, updated, and unabridged code with the appropriate fixes for the identified issues. Remember: \
+                       Do NOT change any existing functionality unless it is critical to fixing the previously identified issues. \
+                       Only make changes that directly address the identified issues or significantly improve the code based on your analysis and the insights from Perplexity. \
+                       Ensure that all original functionality remains intact. \
+                     You can take multiple messages to complete this task if necessary. Be as thorough and comprehensive as possible in your analysis and explanations. Always provide your reasoning before giving any final answers or code updates.",
+            },
+          },
         },
       },
     },
@@ -1120,6 +1301,18 @@ require('lazy').setup({
         },
         env = {
           api_key = os.getenv 'GEMINI_API_KEY',
+        },
+      })
+    end,
+    anthropic = function()
+      return require('codecompanion.adapters').extend('anthropic', {
+        schema = {
+          model = {
+            default = 'claude-4-sonnet-20250522',
+          },
+        },
+        env = {
+          api_key = os.getenv 'ANTHROPIC_API_KEY',
         },
       })
     end,
@@ -1162,8 +1355,16 @@ require('lazy').setup({
       ['['] = 'keymaps.previous', -- don't use
     },
   },
-  -- },
 
+  --
+  --
+  --
+  --
+  --
+  --
+  --
+  --
+  --
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
@@ -1184,45 +1385,52 @@ require('lazy').setup({
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
+
   -- { import = 'custom.plugins' },
+
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
 
+  --
+  --
+  --
+  --
+  --
+  --
+  -- -----------------------------------------
   -- Michael Hatton additional plugins
   --
   --
+
   -- {
-  --
-  --   require 'nvim-tree/nvim-web-devicons',
+  --   'ibhagwan/fzf-lua',
+  --   -- dependencies = { 'nvim-tree/nvim-web-devicons' },
+  --   -- or if using mini.icons/mini.nvim
+  --   dependencies = { 'echasnovski/mini.icons' },
   --   opts = {},
   -- },
 
-  {
-    'ibhagwan/fzf-lua',
-    -- dependencies = { 'nvim-tree/nvim-web-devicons' },
-    -- or if using mini.icons/mini.nvim
-    dependencies = { 'echasnovski/mini.icons' },
-    opts = {},
-  },
-
-  {
-    'frankroeder/parrot.nvim',
-    dependencies = { 'ibhagwan/fzf-lua', 'nvim-lua/plenary.nvim' },
-    -- optionally include "rcarriga/nvim-notify" for beautiful notifications
-    opts = {
-      providers = {
-        gemini = {
-          api_key = os.getenv 'GEMINI_API_KEY',
-        },
-        openai = {
-          api_key = os.getenv 'OPENAI_API_KEY',
-        },
-      },
-    },
-  },
+  -- {
+  --   'frankroeder/parrot.nvim',
+  --   dependencies = { 'ibhagwan/fzf-lua', 'nvim-lua/plenary.nvim' },
+  --   -- optionally include "rcarriga/nvim-notify" for beautiful notifications
+  --   opts = {
+  --     providers = {
+  --       gemini = {
+  --         api_key = os.getenv 'GEMINI_API_KEY',
+  --       },
+  --       openai = {
+  --         api_key = os.getenv 'OPENAI_API_KEY',
+  --       },
+  --       anthropic = {
+  --         api_key = os.getenv 'ANTHROPIC_API_KEY',
+  --       },
+  --     },
+  --   },
+  -- },
   -- config = function()
   --   require('parrot').setup {
   --     -- Providers must be explicitly added to make them available.
@@ -1274,22 +1482,19 @@ require('lazy').setup({
     opts = {},
     config = function() end,
   },
+
   {
     'junegunn/goyo.vim',
     opts = {},
     config = function() end,
   },
+
   {
     'junegunn/seoul256.vim',
     opts = {},
     config = function() end,
   },
-  -- replaced with mini.vim mini.surround
-  -- {
-  --   'tpope/vim-surround',
-  --   opts = {},
-  --   config = function() end,
-  -- },
+
   {
     'azabiong/vim-highlighter',
     init = function() end,
@@ -1309,16 +1514,19 @@ require('lazy').setup({
       -- vim.keymap.set('n', '<leader>gs', '<cmd>HighlightedyankSetSL<CR>', { desc = 'Highlightedyank SetSL' })
     end,
   },
+
   {
     'preservim/tagbar',
     opts = {},
     config = function() end,
   },
+
   {
     'wakatime/vim-wakatime',
     opts = {},
     config = function() end,
   },
+
   {
     'norcalli/nvim-colorizer.lua',
     opts = {},
@@ -1374,149 +1582,107 @@ require('lazy').setup({
     config = function() end,
   },
 
-  {
-    '2kabhishek/markit.nvim',
-    -- config = load_config('tools.marks'),
-    config = function()
-      require('markit').setup {
-        -- whether to map keybinds or not. default true
-        default_mappings = true,
-        -- which builtin marks to show. default {}
-        builtin_marks = { '.', '<', '>', '^' },
-        -- whether movements cycle back to the beginning/end of buffer. default true
-        cyclic = true,
-        -- whether the shada file is updated after modifying uppercase marks. default false
-        force_write_shada = false,
-        -- how often (in ms) to redraw signs/recompute mark positions.
-        -- higher value means better performance but may cause visual lag,
-        -- while lower value may cause performance penalties. default 150.
-        refresh_interval = 150,
-        -- sign priorities for each type of mark - builtin marks, uppercase marks, lowercase
-        -- marks, and bookmarks.
-        -- can be either a table with all/none of the keys, or a single number, in which case
-        -- the priority applies to all marks.
-        -- default 10.
-        sign_priority = { lower = 10, upper = 15, builtin = 8, bookmark = 20 },
-        -- disables mark tracking for specific filetypes. default {}
-        excluded_filetypes = {},
-        -- disables mark tracking for specific buftypes. default {}
-        excluded_buftypes = {},
-        -- marks.nvim allows you to configure up to 10 bookmark groups, each with its own
-        -- sign/virttext. Bookmarks can be used to group together positions and quickly move
-        -- across multiple buffers. default sign is '!@#$%^&*()' (from 0 to 9), and
-        -- default virt_text is "".
-        bookmark_0 = {
-          sign = '⚑',
-          virt_text = 'hello world',
-          -- explicitly prompt for a virtual line annotation when setting a bookmark from this group.
-          -- defaults to false.
-          annotate = false,
-        },
-        mappings = {},
-      }
-    end,
-
-    event = { 'BufReadPre', 'BufNewFile' },
-  },
   -- {
-  --   'Vigemus/iron.nvim',
-  --   opts = {},
-  --   -- config = function() end,
+  --   'milanglacier/minuet-ai.nvim',
+  --   dependencies = {
+  --     'nvim-lua/plenary.nvim', -- A common dependency for many Neovim plugins
+  --   },
   --   config = function()
-  --     local iron = require 'iron.core'
-  --     local view = require 'iron.view'
-  --     local common = require 'iron.fts.common'
-  --
-  --     iron.setup {
-  --       config = {
-  --         -- Whether a repl should be discarded or not
-  --         scratch_repl = true,
-  --         -- Your repl definitions come here
-  --         repl_definition = {
-  --           sh = {
-  --             -- Can be a table or a function that
-  --             -- returns a table (see below)
-  --             command = { 'zsh' },
+  --     require('minuet').setup {
+  --       -- Minuet AI configuration options here
+  --       -- For example:
+  --       -- model = "ollama/llama3",
+  --       -- api_key = "your_api_key",
+  --       -- ... other settings as per minuet-ai.nvim documentation
+  --       provider = "claude",
+  --       -- You can customize provider options, or stick with the defaults.
+  --       -- The default model is 'claude-3-5-sonnet-20240620'.
+  --       provider_options = {
+  --         claude = {
+  --           model = 'claude-sonnet-4-5',
+  --           max_tokens = 512,
+  --           -- system = "see [Prompt] section for the default value",
+  --           -- few_shots = "see [Prompt] section for the default value",
+  --           -- chat_input = "See [Prompt Section for default value]",
+  --           stream = true,
+  --           api_key = 'ANTHROPIC_API_KEY',
+  --           end_point = 'https://api.anthropic.com/v1/messages',
+  --           optional = {
+  --               -- pass any additional parameters you want to send to claude request,
+  --               -- e.g.
+  --               -- stop_sequences = nil,
   --           },
-  --           python = {
-  --             command = { 'python3' }, -- or { "ipython", "--no-autoindent" }
-  --             format = common.bracketed_paste_python,
-  --             block_dividers = { '# %%', '#%%' },
-  --           },
-  --         },
-  --         -- set the file type of the newly created repl to ft
-  --         -- bufnr is the buffer id of the REPL and ft is the filetype of the
-  --         -- language being used for the REPL.
-  --         repl_filetype = function(bufnr, ft)
-  --           return ft
-  --           -- or return a string name such as the following
-  --           -- return "iron"
-  --         end,
-  --         -- How the repl window will be displayed
-  --         -- See below for more information
-  --         repl_open_cmd = view.bottom(40),
-  --
-  --         -- repl_open_cmd can also be an array-style table so that multiple
-  --         -- repl_open_commands can be given.
-  --         -- When repl_open_cmd is given as a table, the first command given will
-  --         -- be the command that `IronRepl` initially toggles.
-  --         -- Moreover, when repl_open_cmd is a table, each key will automatically
-  --         -- be available as a keymap (see `keymaps` below) with the names
-  --         -- toggle_repl_with_cmd_1, ..., toggle_repl_with_cmd_k
-  --         -- For example,
-  --         --
-  --         -- repl_open_cmd = {
-  --         --   view.split.vertical.rightbelow("%40"), -- cmd_1: open a repl to the right
-  --         --   view.split.rightbelow("%25")  -- cmd_2: open a repl below
-  --         -- }
   --       },
-  --       -- Iron doesn't set keymaps by default anymore.
-  --       -- You can set them here or manually add keymaps to the functions in iron.core
-  --       keymaps = {
-  --         toggle_repl = '<space>rr', -- toggles the repl open and closed.
-  --         -- If repl_open_command is a table as above, then the following keymaps are
-  --         -- available
-  --         -- toggle_repl_with_cmd_1 = "<space>rv",
-  --         -- toggle_repl_with_cmd_2 = "<space>rh",
-  --         restart_repl = '<space>rR', -- calls `IronRestart` to restart the repl
-  --         send_motion = '<space>sc',
-  --         visual_send = '<space>sc',
-  --         send_file = '<space>sf',
-  --         send_line = '<space>sl',
-  --         send_paragraph = '<space>sp',
-  --         send_until_cursor = '<space>su',
-  --         send_mark = '<space>sm',
-  --         send_code_block = '<space>sb',
-  --         send_code_block_and_move = '<space>sn',
-  --         mark_motion = '<space>mc',
-  --         mark_visual = '<space>mc',
-  --         remove_mark = '<space>md',
-  --         cr = '<space>s<cr>',
-  --         interrupt = '<space>s<space>',
-  --         exit = '<space>sq',
-  --         clear = '<space>cl',
-  --       },
-  --       -- If the highlight is on, you can change how it looks
-  --       -- For the available options, check nvim_set_hl
-  --       highlight = {
-  --         italic = true,
-  --       },
-  --       ignore_blank_lines = true, -- ignore blank lines when sending visual select lines
+  --     },
   --     }
-  --
-  --     -- iron also has a list of commands, see :h iron-commands for all available commands
-  --     vim.keymap.set('n', '<space>rf', '<cmd>IronFocus<cr>')
-  --     vim.keymap.set('n', '<space>rh', '<cmd>IronHide<cr>')
-  --     --
   --   end,
   -- },
 
-  -- {
-  --   'bfredl/nvim-ipy',
-  --   opts = {},
-  --   config = function() end,
-  -- },
+  {
+    'nvim-treesitter/nvim-treesitter-context',
+    config = function()
+      require('treesitter-context').setup {
+        enable = true, -- Enable this plugin (Can be enabled/disabled later via commands)
+        multiwindow = false, -- Enable multiwindow support.
+        max_lines = 0, -- How many lines the window should span. Values <= 0 mean no limit.
+        min_window_height = 0, -- Minimum editor window height to enable context. Values <= 0 mean no limit.
+        line_numbers = true,
+        multiline_threshold = 20, -- Maximum number of lines to show for a single context
+        trim_scope = 'outer', -- Which context lines to discard if `max_lines` is exceeded. Choices: 'inner', 'outer'
+        mode = 'cursor', -- Line used to calculate context. Choices: 'cursor', 'topline'
+        -- Separator between context and content. Should be a single character string, like '-'.
+        -- When separator is set, the context will only show up when there are at least 2 lines above cursorline.
+        separator = nil,
+        zindex = 20, -- The Z-index of the context window
+        on_attach = nil, -- (fun(buf: integer): boolean) return false to disable attaching
+      }
+    end,
+  },
 
+  -- {
+  --   '2kabhishek/markit.nvim',
+  --   -- config = load_config('tools.marks'),
+  --   config = function()
+  --     require('markit').setup {
+  --       -- whether to map keybinds or not. default true
+  --       default_mappings = true,
+  --       -- which builtin marks to show. default {}
+  --       builtin_marks = { '.', '<', '>', '^' },
+  --       -- whether movements cycle back to the beginning/end of buffer. default true
+  --       cyclic = true,
+  --       -- whether the shada file is updated after modifying uppercase marks. default false
+  --       force_write_shada = false,
+  --       -- how often (in ms) to redraw signs/recompute mark positions.
+  --       -- higher value means better performance but may cause visual lag,
+  --       -- while lower value may cause performance penalties. default 150.
+  --       refresh_interval = 150,
+  --       -- sign priorities for each type of mark - builtin marks, uppercase marks, lowercase
+  --       -- marks, and bookmarks.
+  --       -- can be either a table with all/none of the keys, or a single number, in which case
+  --       -- the priority applies to all marks.
+  --       -- default 10.
+  --       sign_priority = { lower = 10, upper = 15, builtin = 8, bookmark = 20 },
+  --       -- disables mark tracking for specific filetypes. default {}
+  --       excluded_filetypes = {},
+  --       -- disables mark tracking for specific buftypes. default {}
+  --       excluded_buftypes = {},
+  --       -- marks.nvim allows you to configure up to 10 bookmark groups, each with its own
+  --       -- sign/virttext. Bookmarks can be used to group together positions and quickly move
+  --       -- across multiple buffers. default sign is '!@#$%^&*()' (from 0 to 9), and
+  --       -- default virt_text is "".
+  --       bookmark_0 = {
+  --         sign = '⚑',
+  --         virt_text = 'hello world',
+  --         -- explicitly prompt for a virtual line annotation when setting a bookmark from this group.
+  --         -- defaults to false.
+  --         annotate = false,
+  --       },
+  --       mappings = {},
+  --     }
+  --   end,
+  --
+  --   event = { 'BufReadPre', 'BufNewFile' },
+  -- },
 
   --- put plugins before this...
 }, {
@@ -1771,290 +1937,6 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.opt.foldmethod = 'indent'
   end,
 })
-
--- require('codecompanion').setup {
---   display = {
---     action_palette = {
---       width = 95,
---       height = 10,
---       prompt = 'Prompt ', -- Prompt used for interactive LLM calls
---       provider = 'default', -- default|telescope|mini_pick
---       opts = {
---         show_default_actions = true, -- Show the default actions in the action palette?
---         show_default_prompt_library = true, -- Show the default prompt library in the action palette?
---       },
---     },
---   },
---   strategies = {
---     inline = {
---       keymaps = {
---         accept_change = {
---           modes = { n = 'ga' },
---           description = 'Accept the suggested change',
---         },
---         reject_change = {
---           modes = { n = 'gr' },
---           description = 'Reject the suggested change',
---         },
---       },
---     },
---   },
---   prompt_library = {
---     ['Code Expert'] = {
---       strategy = 'chat',
---       description = 'Get some special advice from an LLM',
---       opts = {
---         mapping = '<LocalLeader>ae',
---         modes = { 'v' },
---         short_name = 'expert',
---         auto_submit = true,
---         stop_context_insertion = true,
---         user_prompt = true,
---       },
---       prompts = {
---         {
---           role = 'system',
---           content = function(context)
---             return 'I want you to act as a senior '
---               .. context.filetype
---               .. ' developer. I will ask you specific questions and I want you to return concise explanations and codeblock examples.'
---           end,
---         },
---         {
---           role = 'user',
---           content = function(context)
---             local text = require('codecompanion.helpers.actions').get_code(context.start_line, context.end_line)
---
---             return 'I have the following code:\n\n```' .. context.filetype .. '\n' .. text .. '\n```\n\n'
---           end,
---           opts = {
---             contains_code = true,
---           },
---         },
---       },
---     },
---   },
--- }
-
--- require('nvim-treesitter.configs').setup {
---   pyfold = {
---     enable = true,
---     custom_foldtext = true, -- Sets provided foldtext on window where module is active
---   },
--- }
-
--- require('codecompanion').setup {
---   adapters = {
---     openai = require('codecompanion.adapters').extend('openai', {
---       env = {
---         api_key = 'OPENAI_API_KEY',
---       },
---     }),
---     -- ollama = require('codecompanion.adapters').extend('ollama', {
---     --   schema = {
---     --     model = {
---     --       default = 'codestral',
---     --     },
---     --   },
---     -- }),
---   },
---   strategies = {
---     chat = 'openai',
---     inline = 'openai',
---     tool = 'openai',
---   },
---   log_level = 'DEBUG',
--- }
--- require('codecompanion').setup {
---   adapters = {
---     llama3 = function()
---       return require('codecompanion.adapters').extend('ollama', {
---         name = 'llama3', -- Give this adapter a different name to differentiate it from the default ollama adapter
---         schema = {
---           model = {
---             default = 'phi3:3.8b-mini-4k-instruct-q6_K',
---           },
---           num_ctx = {
---             default = 4096,
---           },
---           num_predict = {
---             default = -1,
---           },
---         },
---       })
---     end,
---     openai = function()
---       return require('codecompanion.adapters').extend('openai', {
---         name = 'openai', -- Give this adapter a different name to differentiate it from the default ollama adapter
---         env = {
---           api_key = os.getenv 'OPENAI_API_KEY',
---         },
---         schema = {
---           model = {
---             default = 'gpt-3.5-turbo',
---           },
---           num_ctx = {
---             default = 4096,
---           },
---           num_predict = {
---             default = -1,
---           },
---         },
---       })
---     end,
---   },
---   strategies = {
---     chat = {
---       adapter = 'openai',
---     },
---     inline = {
---       adapter = 'openai',
---     },
---     agent = {
---       adapter = 'openai',
---     },
---   },
---   display = {
---     chat = {
---       window = {
---         layout = 'vertical', -- float|vertical|horizontal|buffer
---       },
---     },
---   },
---   opts = {
---     ---@param adapter CodeCompanion.Adapter
---     ---@return string
---     system_prompt = function(adapter)
---       if adapter.schema.model.default == 'llama3.1:latest' then
---         return 'My custom system prompt'
---       end
---       return 'My default system prompt'
---     end,
---   },
--- }
-
--- gemini = {
---   api_key = os.getenv 'GEMINI_API_KEY',
--- },
--- require('codecompanion').setup {
---   -- display = {
---   --   action_palette = {
---   --     width = 95,
---   --     height = 10,
---   --     prompt = 'Prompt ', -- Prompt used for interactive LLM calls
---   --     provider = 'default', -- default|telescope|mini_pick
---   --     opts = {
---   --       show_default_actions = true, -- Show the default actions in the action palette?
---   --       show_default_prompt_library = true, -- Show the default prompt library in the action palette?
---   --     },
---   --   },
---   -- },
---   adapters = {
---     openai = function()
---       return require('codecompanion.adapters').extend('openai', {
---         name = "openai", -- Give this adapter a different name to differentiate it from the default ollama adapter
---         schema = {
---           model = {
---             default = "o3-mini",
---           },
---           num_ctx = {
---             default = 16384,
---           },
---           num_predict = {
---             default = -1,
---           },
---         env = {
---           api_key = 'OPENAI_API_KEY',
---         },
---         },
---         })
---     end,
---   },
---   strategies = {
---     chat = 'openai',
---     inline = 'openai',
---     tool = 'openai',
---   },
---   log_level = 'DEBUG',
--- }
--- require('codecompanion').setup {
---   strategies = {
---     chat = {
---       adapter = 'anthropic',
---     },
---     inline = {
---       adapter = 'anthropic',
---     },
---   },
--- }
--- require("codecompanion").setup({
---   adapters = {
---     my_openai = function()
---       return require("codecompanion.adapters").extend("openai_compatible", {
---         env = {
---           url = "http[s]://open_compatible_ai_url", -- optional: default value is ollama url http://127.0.0.1:11434
---           api_key = "OPENAI_API_KEY", -- optional: if your endpoint is authenticated
---           chat_url = "/v1/chat/completions", -- optional: default value, override if different
---         },
---         schema = {
---           model = {
---             default = "deepseek-r1-671b",  -- define llm model to be used
---           },
---           temperature = {
---             order = 2,
---             mapping = "parameters",
---             type = "number",
---             optional = true,
---             default = 0.8,
---             desc = "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both.",
---             validate = function(n)
---               return n >= 0 and n <= 2, "Must be between 0 and 2"
---             end,
---           },
---           max_completion_tokens = {
---             order = 3,
---             mapping = "parameters",
---             type = "integer",
---             optional = true,
---             default = nil,
---             desc = "An upper bound for the number of tokens that can be generated for a completion.",
---             validate = function(n)
---               return n > 0, "Must be greater than 0"
---             end,
---           },
---           stop = {
---             order = 4,
---             mapping = "parameters",
---             type = "string",
---             optional = true,
---             default = nil,
---             desc = "Sets the stop sequences to use. When this pattern is encountered the LLM will stop generating text and return. Multiple stop patterns may be set by specifying multiple separate stop parameters in a modelfile.",
---             validate = function(s)
---               return s:len() > 0, "Cannot be an empty string"
---             end,
---           },
---           logit_bias = {
---             order = 5,
---             mapping = "parameters",
---             type = "map",
---             optional = true,
---             default = nil,
---             desc = "Modify the likelihood of specified tokens appearing in the completion. Maps tokens (specified by their token ID) to an associated bias value from -100 to 100. Use https://platform.openai.com/tokenizer to find token IDs.",
---             subtype_key = {
---               type = "integer",
---             },
---             subtype = {
---               type = "integer",
---               validate = function(n)
---                 return n >= -100 and n <= 100, "Must be between -100 and 100"
---               end,
---             },
---           },
---         },
---       })
---     end,
---   },
--- })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
