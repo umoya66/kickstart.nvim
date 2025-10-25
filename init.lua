@@ -494,25 +494,17 @@ require('lazy').setup({
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
     dependencies = {
-      -- Automatically install LSPs and related tools to stdpath for Neovim
-      -- Mason must be loaded before its dependents so we need to set it up here.
-      -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
-      { 'williamboman/mason.nvim', opts = {} },
-      'williamboman/mason-lspconfig.nvim',
-      'WhoIsSethDaniel/mason-tool-installer.nvim',
+      -- -- Automatically install LSPs and related tools to stdpath for Neovim
+      -- -- Mason must be loaded before its dependents so we need to set it up here.
+      -- { 'mason-org/mason.nvim', opts = {} },
+      -- 'mason-org/mason-lspconfig.nvim',
+      -- -- 'WhoIsSethDaniel/mason-tool-installer.nvim',
 
       -- Useful status updates for LSP.
       { 'j-hui/fidget.nvim', opts = {} },
 
       -- Allows extra capabilities provided by nvim-cmp
-      -- 'hrsh7th/cmp-nvim-lsp',
-    },
-    opts = {
-      diagnostics = {
-        float = {
-          border = 'rounded',
-        },
-      },
+      'hrsh7th/cmp-nvim-lsp',
     },
 
     config = function()
@@ -646,128 +638,6 @@ require('lazy').setup({
         end
         vim.diagnostic.config { signs = { text = diagnostic_signs } }
       end
-
-      -- set diagnostics to popup on cursor over - too obtrusive...
-      -- vim.o.updatetime = 250
-      -- vim.cmd [[autocmd CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {focus=cursor, border='rounded'})]]
-
-      -- vim.diagnostic.open_float()
-
-      -- LSP servers and clients are able to communicate to each other what features they support.
-      --  By default, Neovim doesn't support everything that is in the LSP specification.
-      --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
-      --  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
-      local capabilities = vim.lsp.protocol.make_client_capabilities()
-
-      -- capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
-
-      -- Enable the following language servers
-      --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
-      --
-      --  Add any additional override configuration in the following tables. Available keys are:
-      --  - cmd (table): Override the default command used to start the server
-      --  - filetypes (table): Override the default list of associated filetypes for the server
-      --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
-      --  - settings (table): Override the default settings passed when initializing the server.
-      --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
-      local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        pyright = {},
-        basedpyright = {
-          -- enabled = true,
-          -- position_encoding = 'utf-16',
-          settings = {
-            basedpyright = {
-              analysis = {
-                -- useLibraryCodeForTypes = true,
-                -- typeCheckingMode = 'basic',
-                autoSearchPaths = false,
-                diagnosticMode = 'workspace',
-                -- autoSearchPath = true,
-                -- inlayHints = {
-                --   callArgumentNames = true,
-                -- },
-                diagnosticSeverityOverrides = {
-                  reportUnknownMemberType = false,
-                  reportUnknownArgumentType = false,
-                  reportUnknownVariableType = false,
-                  reportMissingImports = false,
-                  reportAny = false,
-                  reportUnknownParameterType = false,
-                  reportMissingParameterType = false,
-                },
-                stubPath = '/home/mhatton/dev/open/nuke-python-stubs/stubs/',
-                -- extraPaths = {
-                --     '...',
-                -- },
-              },
-              -- python = {
-              --   venvPath = '/path/to/venv',
-              --   venv = 'venv',
-              -- },
-            },
-          }, -- settings
-        },
-        -- end of basedpyright
-        --
-        -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-        --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
-        --
-
-        lua_ls = {
-          -- cmd = { ... },
-          -- filetypes = { ... },
-          -- capabilities = {},
-          settings = {
-            Lua = {
-              completion = {
-                callSnippet = 'Replace',
-              },
-              -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-              diagnostics = { disable = { 'missing-fields' } },
-            },
-          },
-        },
-      }
-
-      -- Ensure the servers and tools above are installed
-      --
-      -- To check the current status of installed tools and/or manually install
-      -- other tools, you can run
-      --    :Mason
-      --
-      -- You can press `g?` for help in this menu.
-      --
-      -- `mason` had to be setup earlier: to configure its options see the
-      -- `dependencies` table for `nvim-lspconfig` above.
-      --
-      -- You can add other tools here that you want Mason to install
-      -- for you, so that they are available from within Neovim.
-      local ensure_installed = vim.tbl_keys(servers or {})
-
-      require('mason-tool-installer').setup { ensure_installed = ensure_installed }
-
-      require('mason-lspconfig').setup {
-        ensure_installed = ensure_installed,
-        automatic_enable = false,
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
-      }
     end,
   },
 
@@ -788,22 +658,7 @@ require('lazy').setup({
     opts = {
       notify_on_error = false,
       format_on_save = false,
-      -- format_on_save = function(bufnr)
-      --   -- Disable "format_on_save lsp_fallback" for languages that don't
-      --   -- have a well standardized coding style. You can add additional
-      --   -- languages here or re-enable it for the disabled ones.
-      --   local disable_filetypes = { c = true, cpp = true }
-      --   local lsp_format_opt
-      --   if disable_filetypes[vim.bo[bufnr].filetype] then
-      --     lsp_format_opt = 'never'
-      --   else
-      --     lsp_format_opt = 'fallback'
-      --   end
-      --   return {
-      --     timeout_ms = 5000,
-      --     lsp_format = lsp_format_opt,
-      --   }
-      -- end,
+
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
@@ -818,6 +673,20 @@ require('lazy').setup({
       --
       -- You can use 'stop_after_first' to run the first available formatter from the list
       -- javascript = { "prettierd", "prettier", stop_after_first = true },
+    },
+  },
+
+  -- save session layouts
+  {
+    'rmagatti/auto-session',
+    lazy = false,
+
+    ---enables autocomplete for opts
+    ---@module "auto-session"
+    ---@type AutoSession.Config
+    opts = {
+      suppressed_dirs = { '~/', '~/Projects', '~/Downloads', '/' },
+      -- log_level = 'debug',
     },
   },
 
@@ -850,14 +719,10 @@ require('lazy').setup({
         },
       },
 
-      -- 'milanglacier/minuet-ai.nvim', -- Ensure minuet is loaded
-
-      -- 'saadparwaiz1/cmp_luasnip',
-
       -- Adds other completion capabilities.
       --  nvim-cmp does not ship with all sources by default. They are split
       --  into multiple repos for maintenance purposes.
-      -- 'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-path',
       'hrsh7th/cmp-buffer',
       'hrsh7th/cmp-cmdline',
@@ -885,7 +750,17 @@ require('lazy').setup({
         formatting = {
           format = require('lspkind').cmp_format {
             mode = 'symbol',
-            symbol_map = { Copilot = '' },
+            symbol_map = {
+              Copilot = '',
+              -- Minuet = '',
+            },
+            menu = {
+              buffer = '[Buffer]',
+              nvim_lsp = '[LSP]',
+              luasnip = '[LuaSnip]',
+              nvim_lua = '[Lua]',
+              copilot = '🎵',
+            },
           },
         },
 
@@ -945,34 +820,33 @@ require('lazy').setup({
             end
           end),
 
+          -- and your other keymappings
+
           -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
         },
 
         sources = cmp.config.sources {
-          -- { name = 'codecompanion' }, -- Add codecompanion as a source
-          -- { name = "copilot"},
           { name = 'copilot', group_index = 2 },
-          -- { name = 'nvim_lsp', group_index = 2 },
-          -- { name = 'buffer', group_index = 2},
-          -- { name = 'path', group_index = 2},
-          -- { name = 'minuet' }, -- Include minuet as a source
+          { name = 'nvim_lsp', group_index = 2 },
+          { name = 'buffer', group_index = 2 },
+          { name = 'path', group_index = 2 },
         },
-        -- sorting = {
-        --   priority_weight = 2,
-        --   comparators = {
-        --     -- require("copilot_cmp.comparators").prioritize, -- Prioritize Copilot entries
-        --     cmp.config.compare.offset,
-        --     cmp.config.compare.exact,
-        --     cmp.config.compare.score,
-        --     cmp.config.compare.recently_used,
-        --     cmp.config.compare.locality,
-        --     cmp.config.compare.kind,
-        --     cmp.config.compare.sort_text,
-        --     cmp.config.compare.length,
-        --     cmp.config.compare.order,
-        --   },
-        -- },
+        sorting = {
+          priority_weight = 2,
+          comparators = {
+            -- require("copilot_cmp.comparators").prioritize, -- Prioritize Copilot entries
+            cmp.config.compare.offset,
+            cmp.config.compare.exact,
+            cmp.config.compare.score,
+            cmp.config.compare.recently_used,
+            cmp.config.compare.locality,
+            cmp.config.compare.kind,
+            cmp.config.compare.sort_text,
+            cmp.config.compare.length,
+            cmp.config.compare.order,
+          },
+        },
       }
     end,
   },
@@ -999,7 +873,7 @@ require('lazy').setup({
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
   { -- Collection of various small independent plugins/modules
-    'echasnovski/mini.nvim',
+    'nvim-mini/mini.nvim',
     config = function()
       -- Better Around/Inside textobjects
       --
@@ -1077,84 +951,6 @@ require('lazy').setup({
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
 
-  --   {
-  --   "yetone/avante.nvim",
-  --   -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
-  --   -- ⚠️ must add this setting! ! !
-  --   build = vim.fn.has("win32") ~= 0
-  --       and "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false"
-  --       or "make",
-  --   event = "VeryLazy",
-  --   version = false, -- Never set this value to "*"! Never!
-  --   ---@module 'avante'
-  --   ---@type avante.Config
-  --   opts = {
-  --     -- add any opts here
-  --     -- this file can contain specific instructions for your project
-  --     instructions_file = "avante.md",
-  --     -- for example
-  --     provider = "claude",
-  --     providers = {
-  --       claude = {
-  --         endpoint = "https://api.anthropic.com",
-  --         model = "claude-sonnet-4-20250514",
-  --         timeout = 30000, -- Timeout in milliseconds
-  --           extra_request_body = {
-  --             temperature = 0.75,
-  --             max_tokens = 20480,
-  --           },
-  --       },
-  --       moonshot = {
-  --         endpoint = "https://api.moonshot.ai/v1",
-  --         model = "kimi-k2-0711-preview",
-  --         timeout = 30000, -- Timeout in milliseconds
-  --         extra_request_body = {
-  --           temperature = 0.75,
-  --           max_tokens = 32768,
-  --         },
-  --       },
-  --     },
-  --   },
-  --   dependencies = {
-  --     "nvim-lua/plenary.nvim",
-  --     "MunifTanjim/nui.nvim",
-  --     --- The below dependencies are optional,
-  --     "nvim-mini/mini.pick", -- for file_selector provider mini.pick
-  --     "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
-  --     "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
-  --     "ibhagwan/fzf-lua", -- for file_selector provider fzf
-  --     "stevearc/dressing.nvim", -- for input provider dressing
-  --     "folke/snacks.nvim", -- for input provider snacks
-  --     "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
-  --     "zbirenbaum/copilot.lua", -- for providers='copilot'
-  --     {
-  --       -- support for image pasting
-  --       "HakonHarnes/img-clip.nvim",
-  --       event = "VeryLazy",
-  --       opts = {
-  --         -- recommended settings
-  --         default = {
-  --           embed_image_as_base64 = false,
-  --           prompt_for_file_name = false,
-  --           drag_and_drop = {
-  --             insert_mode = true,
-  --           },
-  --           -- required for Windows users
-  --           use_absolute_path = true,
-  --         },
-  --       },
-  --     },
-  --     {
-  --       -- Make sure to set this up properly if you have lazy=true
-  --       'MeanderingProgrammer/render-markdown.nvim',
-  --       opts = {
-  --         file_types = { "markdown", "Avante" },
-  --       },
-  --       ft = { "markdown", "Avante" },
-  --     },
-  --   },
-  -- },
-
   {
     'zbirenbaum/copilot.lua',
     opts = {},
@@ -1172,6 +968,8 @@ require('lazy').setup({
     end,
   },
 
+  -- Copilot
+
   {
     'zbirenbaum/copilot-cmp',
     dependencies = 'copilot.lua', -- Ensure copilot.lua is loaded first
@@ -1185,6 +983,8 @@ require('lazy').setup({
     'copilotlsp-nvim/copilot-lsp', -- (optional) for NES functionality
   },
 
+  -- lspkind icons
+  --
   {
     'onsails/lspkind.nvim',
   },
@@ -1378,7 +1178,7 @@ require('lazy').setup({
   -- require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
@@ -1394,79 +1194,7 @@ require('lazy').setup({
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
 
-  --
-  --
-  --
-  --
-  --
-  --
-  -- -----------------------------------------
-  -- Michael Hatton additional plugins
-  --
-  --
-
-  -- {
-  --   'ibhagwan/fzf-lua',
-  --   -- dependencies = { 'nvim-tree/nvim-web-devicons' },
-  --   -- or if using mini.icons/mini.nvim
-  --   dependencies = { 'echasnovski/mini.icons' },
-  --   opts = {},
-  -- },
-
-  -- {
-  --   'frankroeder/parrot.nvim',
-  --   dependencies = { 'ibhagwan/fzf-lua', 'nvim-lua/plenary.nvim' },
-  --   -- optionally include "rcarriga/nvim-notify" for beautiful notifications
-  --   opts = {
-  --     providers = {
-  --       gemini = {
-  --         api_key = os.getenv 'GEMINI_API_KEY',
-  --       },
-  --       openai = {
-  --         api_key = os.getenv 'OPENAI_API_KEY',
-  --       },
-  --       anthropic = {
-  --         api_key = os.getenv 'ANTHROPIC_API_KEY',
-  --       },
-  --     },
-  --   },
-  -- },
-  -- config = function()
-  --   require('parrot').setup {
-  --     -- Providers must be explicitly added to make them available.
-  --     providers = {
-  --       anthropic = {
-  --         api_key = os.getenv 'ANTHROPIC_API_KEY',
-  --       },
-  --       gemini = {
-  --         api_key = os.getenv 'GEMINI_API_KEY',
-  --       },
-  --       groq = {
-  --         api_key = os.getenv 'GROQ_API_KEY',
-  --       },
-  --       mistral = {
-  --         api_key = os.getenv 'MISTRAL_API_KEY',
-  --       },
-  --       pplx = {
-  --         api_key = os.getenv 'PERPLEXITY_API_KEY',
-  --       },
-  --       -- provide an empty list to make provider available (no API key required)
-  --       -- ollama = {},
-  --       openai = {
-  --         api_key = os.getenv 'OPENAI_API_KEY',
-  --       },
-  --       github = {
-  --         api_key = os.getenv 'GITHUB_TOKEN',
-  --       },
-  --       nvidia = {
-  --         api_key = os.getenv 'NVIDIA_API_KEY',
-  --       },
-  --       xai = {
-  --         api_key = os.getenv 'XAI_API_KEY',
-  --       },
-  --     },
-  --   }
-  -- end,
+  -- ZEN mode plugins
 
   {
     'folke/zen-mode.nvim',
@@ -1582,42 +1310,6 @@ require('lazy').setup({
     config = function() end,
   },
 
-  -- {
-  --   'milanglacier/minuet-ai.nvim',
-  --   dependencies = {
-  --     'nvim-lua/plenary.nvim', -- A common dependency for many Neovim plugins
-  --   },
-  --   config = function()
-  --     require('minuet').setup {
-  --       -- Minuet AI configuration options here
-  --       -- For example:
-  --       -- model = "ollama/llama3",
-  --       -- api_key = "your_api_key",
-  --       -- ... other settings as per minuet-ai.nvim documentation
-  --       provider = "claude",
-  --       -- You can customize provider options, or stick with the defaults.
-  --       -- The default model is 'claude-3-5-sonnet-20240620'.
-  --       provider_options = {
-  --         claude = {
-  --           model = 'claude-sonnet-4-5',
-  --           max_tokens = 512,
-  --           -- system = "see [Prompt] section for the default value",
-  --           -- few_shots = "see [Prompt] section for the default value",
-  --           -- chat_input = "See [Prompt Section for default value]",
-  --           stream = true,
-  --           api_key = 'ANTHROPIC_API_KEY',
-  --           end_point = 'https://api.anthropic.com/v1/messages',
-  --           optional = {
-  --               -- pass any additional parameters you want to send to claude request,
-  --               -- e.g.
-  --               -- stop_sequences = nil,
-  --           },
-  --       },
-  --     },
-  --     }
-  --   end,
-  -- },
-
   {
     'nvim-treesitter/nvim-treesitter-context',
     config = function()
@@ -1639,50 +1331,60 @@ require('lazy').setup({
     end,
   },
 
+  -- Neotree
+
   -- {
-  --   '2kabhishek/markit.nvim',
-  --   -- config = load_config('tools.marks'),
-  --   config = function()
-  --     require('markit').setup {
-  --       -- whether to map keybinds or not. default true
-  --       default_mappings = true,
-  --       -- which builtin marks to show. default {}
-  --       builtin_marks = { '.', '<', '>', '^' },
-  --       -- whether movements cycle back to the beginning/end of buffer. default true
-  --       cyclic = true,
-  --       -- whether the shada file is updated after modifying uppercase marks. default false
-  --       force_write_shada = false,
-  --       -- how often (in ms) to redraw signs/recompute mark positions.
-  --       -- higher value means better performance but may cause visual lag,
-  --       -- while lower value may cause performance penalties. default 150.
-  --       refresh_interval = 150,
-  --       -- sign priorities for each type of mark - builtin marks, uppercase marks, lowercase
-  --       -- marks, and bookmarks.
-  --       -- can be either a table with all/none of the keys, or a single number, in which case
-  --       -- the priority applies to all marks.
-  --       -- default 10.
-  --       sign_priority = { lower = 10, upper = 15, builtin = 8, bookmark = 20 },
-  --       -- disables mark tracking for specific filetypes. default {}
-  --       excluded_filetypes = {},
-  --       -- disables mark tracking for specific buftypes. default {}
-  --       excluded_buftypes = {},
-  --       -- marks.nvim allows you to configure up to 10 bookmark groups, each with its own
-  --       -- sign/virttext. Bookmarks can be used to group together positions and quickly move
-  --       -- across multiple buffers. default sign is '!@#$%^&*()' (from 0 to 9), and
-  --       -- default virt_text is "".
-  --       bookmark_0 = {
-  --         sign = '⚑',
-  --         virt_text = 'hello world',
-  --         -- explicitly prompt for a virtual line annotation when setting a bookmark from this group.
-  --         -- defaults to false.
-  --         annotate = false,
-  --       },
-  --       mappings = {},
-  --     }
-  --   end,
-  --
-  --   event = { 'BufReadPre', 'BufNewFile' },
+  --   'nvim-neo-tree/neo-tree.nvim',
+  --   branch = 'v3.x',
+  --   dependencies = {
+  --     'nvim-lua/plenary.nvim',
+  --     'MunifTanjim/nui.nvim',
+  --     'nvim-tree/nvim-web-devicons', -- optional, but recommended
+  --   },
+  --   lazy = false, -- neo-tree will lazily load itself
+  --   vim.keymap.set('n', '<leader>n', '<Cmd>Neotree toggle<CR>', { desc = 'Toggle NeoTree' }),
   -- },
+
+  {
+    'hedyhli/outline.nvim',
+    config = function()
+      -- Example mapping to toggle outline
+      vim.keymap.set('n', '<leader>o', '<cmd>Outline<CR>', { desc = 'Toggle Outline' })
+
+      require('outline').setup {
+        -- Your setup opts here (leave empty to use defaults)
+        providers = {
+          priority = {
+            'lsp',
+            -- 'coc',
+            -- 'markdown',
+            -- 'norg',
+            'treesitter',
+            -- 'copilot',
+          },
+        },
+      }
+    end,
+    dependencies = {
+      'epheien/outline-treesitter-provider.nvim',
+    },
+  },
+
+  {
+    'chrisbra/unicode.vim',
+  },
+
+  {
+    'rachartier/tiny-inline-diagnostic.nvim',
+    event = 'VeryLazy',
+    priority = 1000,
+    config = function()
+      require('tiny-inline-diagnostic').setup()
+      vim.diagnostic.config { virtual_text = false } -- Disable default virtual text
+    end,
+  },
+
+  -- End of my plugins
 
   --- put plugins before this...
 }, {
@@ -1707,12 +1409,12 @@ require('lazy').setup({
   },
 }) -- end of plugin setup
 --
+
 --
 --
---
---Plugin END
---
---
+-- Plugin END
+
+-- ZEN prose settings
 --
 -- I write prose in markdown, all the following is to help with that.
 function _G.toggleProse()
@@ -1851,22 +1553,6 @@ vim.keymap.set('n', '<localleader>l', ':Lazy<cr>', { noremap = true, silent = tr
 --vnoremap // y/\V<C-R>=escape(@",'/\')<CR><CR>
 vim.keymap.set('v', '//', "y/\\V<C-R>=escape(@\",'/\\')<CR><CR>", { noremap = true, silent = true, desc = 'Search selected text' })
 
--- tmux navigator
--- nnoremap <silent> <C-h> <Cmd>NvimTmuxNavigateLeft<CR>
--- vim.keymap.set('n', '<C-h>', ':NvimTmuxNavigateLeft', { noremap = true, silent = true, desc = 'Tmux navigate left' })
--- -- nnoremap <silent> <C-j> <Cmd>NvimTmuxNavigateDown<CR>
--- vim.keymap.set('n', '<C-j>', ':NvimTmuxNavigateDown', { noremap = true, silent = true, desc = 'Tmux navigate down' })
--- -- nnoremap <silent> <C-k> <Cmd>NvimTmuxNavigateUp<CR>
--- vim.keymap.set('n', '<C-k>', ':NvimTmuxNavigateUp', { noremap = true, silent = true, desc = 'Tmux navigate up' })
--- -- nnoremap <silent> <C-l> <Cmd>NvimTmuxNavigateRight<CR>
--- vim.keymap.set('n', '<C-l>', ':NvimTmuxNavigateRight', { noremap = true, silent = true, desc = 'Tmux navigate right' })
--- -- nnoremap <silent> <C-\> <Cmd>NvimTmuxNavigateLastActive<CR>
--- vim.keymap.set('n', '<C-\\>', ':NvimTmuxNavigateLastActive', { noremap = true, silent = true, desc = 'Tmux navigate last active' })
--- -- nnoremap <silent> <C-Space> <Cmd>NvimTmuxNavigateNext<CR>
--- vim.keymap.set('n', '<C-Space>', ':NvimTmuxNavigateNext', { noremap = true, silent = true, desc = 'Tmux navigate next' })
---
---
---
 -- set up folding
 -- vim.opt.foldmethod = 'expr'
 vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
@@ -1888,8 +1574,92 @@ elseif vim.loop.os_uname().sysname == 'Darwin' then -- 'Darwin' is the sysname f
   vim.g.tagbar_ctags_bin = '/opt/homebrew/Cellar/universal-ctags/p6.1.20241103.0/bin/ctags'
 end
 
--- vim.diagnostic.open_float({ scope = "cursor", close_events = { "CursorMoved", "CursorMovedI", "BufHidden", "InsertCharPre", "WinLeave", }, })
--- vim.diagnostic.open_float({ scope = "cursor", })
+-- Toggle Diagnostics
+local diagnostics_enabled = true -- Initial state
+
+function _G.toggle_diagnostics()
+  if diagnostics_enabled then
+    vim.diagnostic.disable()
+    diagnostics_enabled = false
+  else
+    vim.diagnostic.enable()
+    diagnostics_enabled = true
+  end
+end
+
+local virtualtext_enabled = true -- Initial state
+
+function _G.toggle_virtualtext()
+  if virtualtext_enabled then
+    vim.diagnostic.config { virtual_text = false }
+    virtualtext_enabled = false
+  else
+    vim.diagnostic.config { virtual_text = true }
+    virtualtext_enabled = true
+  end
+end
+
+vim.keymap.set('n', '<leader>dt', '<cmd>lua toggle_diagnostics()<CR>', { desc = 'Toggle LSP Diagnostics' })
+vim.keymap.set('n', '<leader>dv', '<cmd>lua toggle_virtualtext()<CR>', { desc = 'Toggle LSP Diagnostics' })
+
+-- nvim-lspconfig set up
+vim.lsp.config('basedpyright', {
+  -- cmd = { … },
+  settings = {
+    basedpyright = {
+      analysis = {
+        useLibraryCodeForTypes = true,
+        typeCheckingMode = 'basic',
+        autoSearchPaths = false,
+        diagnosticMode = 'workspace',
+        autoSearchPath = true,
+        inlayHints = {
+          callArgumentNames = false,
+          functionReturnTypes = false,
+          genericTypes = false,
+          variableTypes = false,
+        },
+        -- diagnosticSeverityOverrides = {
+        --   -- reportUnknownMemberType = false,
+        --   -- reportUnknownArgumentType = false,
+        --   -- reportUnknownVariableType = false,
+        --   -- reportMissingImports = false,
+        --   -- reportAny = false,
+        --   reportUnknownParameterType = false,
+        --   reportMissingParameterType = false,
+        --   reportMissingTypeArgument = false,
+        -- },
+        stubPath = '/home/mhatton/dev/open/nuke-python-stubs/stubs/',
+      },
+    },
+  },
+})
+vim.lsp.enable 'basedpyright'
+
+vim.lsp.config('lua_ls', {
+  settings = {
+    Lua = {
+      workspace = {
+        checkThirdParty = false,
+      },
+      telemetry = {
+        enable = false,
+      },
+      diagnostics = {
+        globals = { 'vim' }, -- Add global variables like 'vim' to avoid warnings
+      },
+    },
+  },
+})
+
+--
+-- set colours for diagnostic text
+
+--
+-- Enable the server for Lua files
+vim.lsp.enable('lua_ls', {
+  filetypes = { 'lua' },
+})
 
 -- colorizer set update
 ---- Attaches to every FileType mode
