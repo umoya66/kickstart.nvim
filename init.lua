@@ -114,9 +114,33 @@ vim.opt.showmode = false
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
-vim.schedule(function()
-  vim.opt.clipboard = 'unnamedplus'
-end)
+-- vim.schedule(function()
+--   vim.opt.clipboard = 'unnamedplus'
+-- end)
+vim.opt.clipboard = 'unnamedplus'
+
+-- Highlight when yanking (copying) text
+--  Try it with `yap` in normal mode
+--  See `:help vim.highlight.on_yank()`
+-- vim.api.nvim_create_autocmd('TextYankPost', {
+--   desc = 'Highlight when yanking (copying) text',
+--   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
+--   callback = function()
+--     vim.highlight.on_yank()
+--   end,
+-- })
+vim.g.clipboard = 'osc52'
+vim.api.nvim_create_autocmd('TextYankPost', {
+  desc = 'Highlight when yanking (copying) text',
+  group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
+  callback = function()
+    vim.highlight.on_yank()
+    -- -- Copy to '+' register (system clipboard) using OSC 52
+    -- local copy_to_unnamedplus = require('vim.ui.clipboard.osc52').copy '+'
+    -- copy_to_unnamedplus(vim.v.event.regcontents)
+  end,
+})
+
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -191,17 +215,6 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
-
--- Highlight when yanking (copying) text
---  Try it with `yap` in normal mode
---  See `:help vim.highlight.on_yank()`
-vim.api.nvim_create_autocmd('TextYankPost', {
-  desc = 'Highlight when yanking (copying) text',
-  group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
-  callback = function()
-    vim.highlight.on_yank()
-  end,
-})
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
@@ -869,8 +882,64 @@ require('lazy').setup({
     end,
   },
 
+  {
+    'davur/vim-visualstudiodark',
+  },
+
+  {
+
+    'sainnhe/everforest',
+    -- 'neanias/everforest-nvim',
+    lazy = false,
+    priority = 1000,
+    config = function()
+      -- require('everforest').setup {
+      --   -- Your config here
+      --   background = "hard",
+      -- }
+      -- Optionally configure and load the colorscheme
+      -- directly inside the plugin declaration.
+    end,
+    -- 'tomasiser/vim-code-dark',
+  },
+
   -- Highlight todo, notes, etc in comments
-  { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
+  {
+    'folke/todo-comments.nvim',
+    event = 'VimEnter',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    config = function()
+      require('todo-comments').setup {
+        signs = true,
+        keywords = {
+          UNCOMMENT = { icon = ' ', color = 'warning' },
+          HACK = { icon = ' ', color = 'hint' },
+          YOUTUBE = { icon = '', color = 'warning' },
+          -- Existing keywords are merged by default.
+          -- Add new custom keywords here:
+          -- UNCOMMENT = { icon = ' ', color = 'warning' },
+        },
+      }
+    end,
+    -- config = function()
+    --   require('todo-comments').setup {
+    --     -- optional: customize highlight groups, keywords, and icons
+    --     signs = true,
+    --     keywords = {
+    --       UNCOMMENT = { icon = ' ', color = 'warning' },
+    --       HACK = { icon = ' ', color = 'hint' },
+    --     },
+    --   }
+    -- end,
+    -- opts = {
+    --   signs = true,
+    --   -- merge_keywords = true,
+    --   -- keywords = {
+    --   --   UNCOMMENT = { icon = ' ', color = 'warning', alt = { "WARNING", "XXX" } },
+    --   --   HACK = { icon = ' ', color = 'hint' },
+    --   -- },
+    -- },
+  },
 
   { -- Collection of various small independent plugins/modules
     'nvim-mini/mini.nvim',
@@ -1629,7 +1698,7 @@ vim.lsp.config('basedpyright', {
         --   reportMissingParameterType = false,
         --   reportMissingTypeArgument = false,
         -- },
-        stubPath = '/home/mhatton/dev/open/nuke-python-stubs/stubs/',
+        stubPath = vim.fn.expand '$HOME/dev/open/nuke-python-stubs/stubs/',
       },
     },
   },
@@ -1699,6 +1768,11 @@ require('colorizer').setup {
   '!vim', -- Exclude vim from highlighting.
   -- Exclusion Only makes sense if '*' is specified!
 }
+
+
+vim.g.everforest_enable_italic = true
+vim.g.everforest_background = "hard"
+vim.cmd.colorscheme 'everforest'
 
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'python',
