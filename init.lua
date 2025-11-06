@@ -110,6 +110,29 @@ vim.opt.mouse = 'a'
 -- Don't show the mode, since it's already in the status line
 vim.opt.showmode = false
 
+-- clipboard fix for wezterm terminal
+--https://github.com/neovim/neovim/discussions/28010 
+vim.o.clipboard = "unnamedplus"
+
+local function paste()
+  return {
+    vim.fn.split(vim.fn.getreg(""), "\n"),
+    vim.fn.getregtype(""),
+  }
+end
+
+vim.g.clipboard = {
+  name = "OSC 52",
+  copy = {
+    ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+  },
+  paste = {
+    ["+"] = paste,
+    ["*"] = paste,
+  },
+}
+
 -- Sync clipboard between OS and Neovim.
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  Remove this option if you want your OS clipboard to remain independent.
@@ -117,7 +140,7 @@ vim.opt.showmode = false
 -- vim.schedule(function()
 --   vim.opt.clipboard = 'unnamedplus'
 -- end)
-vim.opt.clipboard = 'unnamedplus'
+-- vim.opt.clipboard = 'unnamedplus'
 
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
@@ -129,18 +152,29 @@ vim.opt.clipboard = 'unnamedplus'
 --     vim.highlight.on_yank()
 --   end,
 -- })
-vim.g.clipboard = 'osc52'
-vim.api.nvim_create_autocmd('TextYankPost', {
-  desc = 'Highlight when yanking (copying) text',
-  group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
-  callback = function()
-    vim.highlight.on_yank()
-    -- -- Copy to '+' register (system clipboard) using OSC 52
-    -- local copy_to_unnamedplus = require('vim.ui.clipboard.osc52').copy '+'
-    -- copy_to_unnamedplus(vim.v.event.regcontents)
-  end,
-})
-
+-- vim.g.clipboard = 'osc52'
+-- vim.api.nvim_create_autocmd('TextYankPost', {
+--   desc = 'Highlight when yanking (copying) text',
+--   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
+--   callback = function()
+--     vim.highlight.on_yank()
+--     -- -- Copy to '+' register (system clipboard) using OSC 52
+--     -- local copy_to_unnamedplus = require('vim.ui.clipboard.osc52').copy '+'
+--     -- copy_to_unnamedplus(vim.v.event.regcontents)
+--   end,
+-- })
+--
+-- vim.g.clipboard = {
+--   name = 'OSC 52',
+--   copy = {
+--     ['+'] = require('vim.ui.clipboard.osc52').copy '+',
+--     ['*'] = require('vim.ui.clipboard.osc52').copy '*',
+--   },
+--   paste = {
+--     ['+'] = require('vim.ui.clipboard.osc52').paste '+',
+--     ['*'] = require('vim.ui.clipboard.osc52').paste '*',
+--   },
+-- }
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -686,20 +720,6 @@ require('lazy').setup({
       --
       -- You can use 'stop_after_first' to run the first available formatter from the list
       -- javascript = { "prettierd", "prettier", stop_after_first = true },
-    },
-  },
-
-  -- save session layouts
-  {
-    'rmagatti/auto-session',
-    lazy = false,
-
-    ---enables autocomplete for opts
-    ---@module "auto-session"
-    ---@type AutoSession.Config
-    opts = {
-      suppressed_dirs = { '~/', '~/Projects', '~/Downloads', '/' },
-      -- log_level = 'debug',
     },
   },
 
@@ -1255,7 +1275,7 @@ require('lazy').setup({
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
 
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
 
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
@@ -1476,7 +1496,8 @@ require('lazy').setup({
     --   lazy = '💤 ',
     -- },
   },
-}) -- end of plugin setup
+}
+) -- end of plugin setup
 --
 
 --
