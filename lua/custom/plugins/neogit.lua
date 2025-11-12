@@ -11,4 +11,8 @@ return
     -- "nvim-mini/mini.pick",           -- optional
     -- "folke/snacks.nvim",             -- optional
   },
+  opts = {
+      graph_style = "unicode",
+      -- graph_style = "kitty", -- broken with flog-symbols
+  },
 }
