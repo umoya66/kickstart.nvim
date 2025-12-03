@@ -272,10 +272,6 @@ local has_words_before = function()
 end
 
 --
---
---
---
---
 -- [[ Configure and install plugins ]]
 --
 --  To check the current status of your plugins, run
@@ -910,6 +906,26 @@ require('lazy').setup({
       -- You can configure highlights by doing something like:
       vim.cmd.hi 'Comment gui=none'
     end,
+  },
+
+  {
+    'morhetz/gruvbox',
+  },
+  { -- A dark Visual Studio-like colorscheme}
+    'navarasu/onedark.nvim',
+    -- 'olimorris/onedarkpro.nvim',
+  },
+  { -- A dark Visual Studio-like colorscheme
+    'mhartington/oceanic-next',
+  },
+  { -- A dark Visual Studio-like colorscheme
+    'lunarvim/darkplus.nvim',
+  },
+  { -- A dark Visual Studio-like colorscheme
+    'marko-cerovac/material.nvim',
+  },
+  { -- A dark Visual Studio-like colorscheme
+    'sainnhe/gruvbox-material',
   },
 
   {
