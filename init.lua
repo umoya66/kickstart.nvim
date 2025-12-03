@@ -111,25 +111,25 @@ vim.opt.mouse = 'a'
 vim.opt.showmode = false
 
 -- clipboard fix for wezterm terminal
---https://github.com/neovim/neovim/discussions/28010 
-vim.o.clipboard = "unnamedplus"
+--https://github.com/neovim/neovim/discussions/28010
+vim.o.clipboard = 'unnamedplus'
 
 local function paste()
   return {
-    vim.fn.split(vim.fn.getreg(""), "\n"),
-    vim.fn.getregtype(""),
+    vim.fn.split(vim.fn.getreg '', '\n'),
+    vim.fn.getregtype '',
   }
 end
 
 vim.g.clipboard = {
-  name = "OSC 52",
+  name = 'OSC 52',
   copy = {
-    ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
-    ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+    ['+'] = require('vim.ui.clipboard.osc52').copy '+',
+    ['*'] = require('vim.ui.clipboard.osc52').copy '*',
   },
   paste = {
-    ["+"] = paste,
-    ["*"] = paste,
+    ['+'] = paste,
+    ['*'] = paste,
   },
 }
 
@@ -438,11 +438,21 @@ require('lazy').setup({
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
+        defaults = {
+          -- The vimgrep_arguments are passed to the grep command (default is 'rg')
+          vimgrep_arguments = {
+            'rg',
+            -- '--color=never',
+            -- '--no-heading',
+            '--with-filename',
+            '--line-number', -- Add this flag to include line numbers
+            '--column',
+            '--smart-case',
+          },
+          --   mappings = {
+          --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
+          --   },
+        },
         -- pickers = {}
         extensions = {
           --   file_browser = {
@@ -488,10 +498,8 @@ require('lazy').setup({
       vim.keymap.set('n', '<space>sb', ':Telescope file_browser<CR>', { desc = '[B] Browse Files' })
       vim.keymap.set('n', '<space>"', ':Telescope registers<CR>', { desc = '["] Show Registers' })
 
-      -- nnoremap <leader>ff <cmd>Telescope find_files<cr>
-      -- nnoremap <leader>fg <cmd>Telescope live_grep<cr>
-      -- nnoremap <leader>fb <cmd>Telescope buffers<cr>
-      -- nnoremap <leader>fh <cmd>Telescope help_tags<cr>
+      -- Add line numbers to grep preview window
+      vim.cmd "autocmd User TelescopePreviewerLoaded setlocal number"
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -604,6 +612,8 @@ require('lazy').setup({
 
           -- Find references for the word under your cursor.
           map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+
+          map('gm', require('telescope.builtin').marks, '[G]oto [M]arks')
 
           -- Jump to the implementation of the word under your cursor.
           --  Useful when your language has ways of declaring types without an actual implementation.
@@ -1496,8 +1506,7 @@ require('lazy').setup({
     --   lazy = '💤 ',
     -- },
   },
-}
-) -- end of plugin setup
+}) -- end of plugin setup
 --
 
 --
@@ -1790,9 +1799,8 @@ require('colorizer').setup {
   -- Exclusion Only makes sense if '*' is specified!
 }
 
-
 vim.g.everforest_enable_italic = true
-vim.g.everforest_background = "hard"
+vim.g.everforest_background = 'hard'
 vim.cmd.colorscheme 'everforest'
 
 vim.api.nvim_create_autocmd('FileType', {
