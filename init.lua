@@ -114,6 +114,11 @@ vim.opt.showmode = false
 --https://github.com/neovim/neovim/discussions/28010
 vim.o.clipboard = 'unnamedplus'
 
+-- set up python version for internal python 
+vim.g.python3_host_prog = '/home/michael/.pyenv/versions/nvim-python/bin/python3'
+
+
+
 local function paste()
   return {
     vim.fn.split(vim.fn.getreg '', '\n'),
@@ -1497,6 +1502,10 @@ require('lazy').setup({
       require('tiny-inline-diagnostic').setup()
       vim.diagnostic.config { virtual_text = false } -- Disable default virtual text
     end,
+  },
+
+  {
+    'lambdalisue/vim-suda',
   },
 
   -- End of my plugins
